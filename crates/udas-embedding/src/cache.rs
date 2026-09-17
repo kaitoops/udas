@@ -37,16 +37,20 @@ impl<E: Embedder + 'static> CachedEmbedder<E> {
         let mut initial_cache = HashMap::new();
         if let Ok(entries) = std::fs::read_dir(&cache_dir) {
             for entry in entries.flatten() {
-                if let Some(name) = entry.file_name().to_str() {
-                    if name.len() == 64 {
-                        // SHA-256 hex = 64 chars
-                        if let Ok(hash) = hex_to_bytes(name) {
-                            if let Ok(emb) = read_embedding(&entry.path()) {
-                                initial_cache.insert(hash, emb);
-                            }
-                        }
-                    }
+                let Ok(name) = entry.file_name().into_string() else {
+                    continue;
+                };
+                if name.len() != 64 {
+                    // SHA-256 hex = 64 chars
+                    continue;
                 }
+                let Ok(hash) = hex_to_bytes(&name) else {
+                    continue;
+                };
+                let Ok(emb) = read_embedding(&entry.path()) else {
+                    continue;
+                };
+                initial_cache.insert(hash, emb);
             }
         }
         tracing::info!(
@@ -94,11 +98,11 @@ impl<E: Embedder + 'static> Embedder for CachedEmbedder<E> {
         // Check disk cache
         let hex = bytes_to_hex(&hash);
         let cache_file = self.cache_dir.join(&hex);
-        if cache_file.exists() {
-            if let Ok(emb) = read_embedding(&cache_file) {
-                self.memory_cache.write().await.insert(hash, emb.clone());
-                return Ok(emb);
-            }
+        if cache_file.exists()
+            && let Ok(emb) = read_embedding(&cache_file)
+        {
+            self.memory_cache.write().await.insert(hash, emb.clone());
+            return Ok(emb);
         }
 
         // Compute embedding

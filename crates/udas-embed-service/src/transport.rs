@@ -227,10 +227,11 @@ pub mod tcp {
 /// Create a transport instance from configuration.
 ///
 /// Returns an error if the requested transport's feature is not enabled.
+#[cfg_attr(not(feature = "tcp"), allow(unused_variables))]
 pub fn create_transport(
     kind: crate::config::TransportKind,
     local_socket_name: &str,
-    _tcp_addr: &str,
+    tcp_addr: &str,
 ) -> anyhow::Result<Box<dyn Transport>> {
     match kind {
         crate::config::TransportKind::LocalSocket => {
