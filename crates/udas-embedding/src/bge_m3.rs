@@ -8,10 +8,10 @@ use std::sync::Mutex;
 
 use anyhow::{Context, Result};
 use async_trait::async_trait;
+use ndarray::Array2;
+use ort::inputs;
 use ort::session::{Session, builder::GraphOptimizationLevel};
 use ort::value::Tensor;
-use ort::inputs;
-use ndarray::Array2;
 
 use crate::embedder::{Embedder, Embedding};
 use crate::gpu::GpuState;
@@ -50,29 +50,38 @@ impl BgeM3Embedder {
         }
 
         let mut builder = Session::builder()?
-            .with_optimization_level(GraphOptimizationLevel::Level3).map_err(|e| anyhow::anyhow!("ort optimization: {e}"))?
-            .with_intra_threads(4).map_err(|e| anyhow::anyhow!("ort threads: {e}"))?;
+            .with_optimization_level(GraphOptimizationLevel::Level3)
+            .map_err(|e| anyhow::anyhow!("ort optimization: {e}"))?
+            .with_intra_threads(4)
+            .map_err(|e| anyhow::anyhow!("ort threads: {e}"))?;
 
         if use_cuda {
             use ort::ep::CUDA;
-            builder = builder.with_execution_providers([
-                CUDA::default().build(),
-                ort::ep::CPU::default().build(),
-            ]).map_err(|e| anyhow::anyhow!("ort EP: {e}"))?;
+            builder = builder
+                .with_execution_providers([
+                    CUDA::default().build(),
+                    ort::ep::CPU::default().build(),
+                ])
+                .map_err(|e| anyhow::anyhow!("ort EP: {e}"))?;
             tracing::info!("BGE-M3: using CUDA execution provider");
         } else {
             use ort::ep::CPU;
-            builder = builder.with_execution_providers([
-                CPU::default().build(),
-            ]).map_err(|e| anyhow::anyhow!("ort EP: {e}"))?;
+            builder = builder
+                .with_execution_providers([CPU::default().build()])
+                .map_err(|e| anyhow::anyhow!("ort EP: {e}"))?;
             tracing::info!("BGE-M3: using CPU execution provider");
         }
 
-        let session = builder.commit_from_file(&model_path)
+        let session = builder
+            .commit_from_file(&model_path)
             .with_context(|| format!("Failed to load ONNX model from {}", model_path.display()))?;
 
-        let tokenizer = tokenizers::Tokenizer::from_file(&tokenizer_path)
-            .map_err(|e| anyhow::anyhow!("Failed to load tokenizer from {}: {e}", tokenizer_path.display()))?;
+        let tokenizer = tokenizers::Tokenizer::from_file(&tokenizer_path).map_err(|e| {
+            anyhow::anyhow!(
+                "Failed to load tokenizer from {}: {e}",
+                tokenizer_path.display()
+            )
+        })?;
 
         Ok(Self {
             session: Mutex::new(session),
@@ -104,7 +113,9 @@ impl BgeM3Embedder {
     /// Run ONNX inference and return the embedding.
     fn run_inference(&self, text: &str) -> Result<Embedding> {
         // 1. Tokenize
-        let encoding = self.tokenizer.encode(text, true)
+        let encoding = self
+            .tokenizer
+            .encode(text, true)
             .map_err(|e| anyhow::anyhow!("Tokenizer failed to encode text: {e}"))?;
 
         let input_ids = encoding.get_ids();
@@ -112,10 +123,8 @@ impl BgeM3Embedder {
         let seq_len = input_ids.len();
 
         // 2. Convert to ndarray
-        let input_ids_arr: Array2<i64> = Array2::from_shape_vec(
-            (1, seq_len),
-            input_ids.iter().map(|&v| v as i64).collect(),
-        )?;
+        let input_ids_arr: Array2<i64> =
+            Array2::from_shape_vec((1, seq_len), input_ids.iter().map(|&v| v as i64).collect())?;
         let attention_arr: Array2<i64> = Array2::from_shape_vec(
             (1, seq_len),
             attention_mask.iter().map(|&v| v as i64).collect(),
@@ -128,7 +137,9 @@ impl BgeM3Embedder {
         ];
 
         // ort 2.0: run() requires &mut self — use Mutex
-        let mut session = self.session.lock()
+        let mut session = self
+            .session
+            .lock()
             .map_err(|e| anyhow::anyhow!("Session mutex poisoned: {e}"))?;
         let outputs = session.run(inputs)?;
 
@@ -139,17 +150,9 @@ impl BgeM3Embedder {
         let (s_len, h_dim) = (shape_ref[1] as usize, shape_ref[2] as usize);
 
         // 5. Mean pooling + L2 normalize
-        let attention_mask_i64: Vec<i64> = attention_mask
-            .iter()
-            .map(|&v| v as i64)
-            .collect();
+        let attention_mask_i64: Vec<i64> = attention_mask.iter().map(|&v| v as i64).collect();
 
-        let embedding = mean_pool_and_normalize(
-            hidden_data,
-            s_len,
-            h_dim,
-            &attention_mask_i64,
-        );
+        let embedding = mean_pool_and_normalize(hidden_data, s_len, h_dim, &attention_mask_i64);
 
         Ok(embedding)
     }
@@ -157,8 +160,7 @@ impl BgeM3Embedder {
 
 #[async_trait]
 impl Embedder for BgeM3Embedder {
-    async fn embed(&self, text: &str) -> Result<Embedding> {
-        let text = text.to_string();
+    async fn embed(&self, _text: &str) -> Result<Embedding> {
         tokio::task::spawn_blocking(move || {
             // BgeM3Embedder is not Send when wrapped in Arc due to Mutex<Session>
             // This is handled by BgeM3EmbedderAsync wrapper below.
@@ -191,7 +193,9 @@ impl BgeM3EmbedderAsync {
     }
 
     pub fn new_with_cuda(model_dir: &Path) -> Result<Self> {
-        Ok(Self(std::sync::Arc::new(BgeM3Embedder::new_with_cuda(model_dir)?)))
+        Ok(Self(std::sync::Arc::new(BgeM3Embedder::new_with_cuda(
+            model_dir,
+        )?)))
     }
 }
 
@@ -200,11 +204,9 @@ impl Embedder for BgeM3EmbedderAsync {
     async fn embed(&self, text: &str) -> Result<Embedding> {
         let inner = self.0.clone();
         let text = text.to_string();
-        tokio::task::spawn_blocking(move || {
-            inner.embed_sync(&text)
-        })
-        .await
-        .context("BGE-M3 spawn_blocking task panicked")?
+        tokio::task::spawn_blocking(move || inner.embed_sync(&text))
+            .await
+            .context("BGE-M3 spawn_blocking task panicked")?
     }
 
     fn native_dim(&self) -> usize {

@@ -48,7 +48,9 @@ impl GpuState {
                 format!("GPU available: {free_mb}MB free / {total_mb}MB total")
             }
             GpuState::Busy { used_mb, total_mb } => {
-                format!("GPU busy: {used_mb}MB used / {total_mb}MB total (need {MIN_FREE_VRAM_MB}MB free)")
+                format!(
+                    "GPU busy: {used_mb}MB used / {total_mb}MB total (need {MIN_FREE_VRAM_MB}MB free)"
+                )
             }
             GpuState::Unavailable => "No NVIDIA GPU detected".to_string(),
         }
@@ -98,8 +100,14 @@ mod tests {
 
     #[test]
     fn gpu_state_is_available_logic() {
-        let available = GpuState::Available { free_mb: 11_000, total_mb: 12_000 };
-        let busy = GpuState::Busy { used_mb: 11_500, total_mb: 12_000 };
+        let available = GpuState::Available {
+            free_mb: 11_000,
+            total_mb: 12_000,
+        };
+        let busy = GpuState::Busy {
+            used_mb: 11_500,
+            total_mb: 12_000,
+        };
         let unavailable = GpuState::Unavailable;
 
         assert!(available.is_available());
@@ -109,11 +117,17 @@ mod tests {
 
     #[test]
     fn gpu_state_descriptions() {
-        let available = GpuState::Available { free_mb: 10_500, total_mb: 12_000 };
+        let available = GpuState::Available {
+            free_mb: 10_500,
+            total_mb: 12_000,
+        };
         assert!(available.description().contains("10"));
         assert!(available.description().contains("available"));
 
-        let busy = GpuState::Busy { used_mb: 11_000, total_mb: 12_000 };
+        let busy = GpuState::Busy {
+            used_mb: 11_000,
+            total_mb: 12_000,
+        };
         assert!(busy.description().contains("busy"));
 
         let unavailable = GpuState::Unavailable;

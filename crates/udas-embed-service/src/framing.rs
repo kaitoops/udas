@@ -50,10 +50,7 @@ pub async fn read_frame<R: AsyncRead + Unpin>(reader: &mut R) -> io::Result<Vec<
 ///
 /// # Errors
 /// - `InvalidData` if the payload exceeds `MAX_FRAME_SIZE`.
-pub async fn write_frame<W: AsyncWrite + Unpin>(
-    writer: &mut W,
-    payload: &[u8],
-) -> io::Result<()> {
+pub async fn write_frame<W: AsyncWrite + Unpin>(writer: &mut W, payload: &[u8]) -> io::Result<()> {
     let len = payload.len();
     if len > MAX_FRAME_SIZE {
         return Err(io::Error::new(

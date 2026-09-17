@@ -1867,9 +1867,7 @@ fn chinese_simplified(id: MessageId) -> Option<&'static str> {
             "步骤 1.  打开 https://platform.deepseek.com/api_keys 创建一个密钥。"
         }
         MessageId::OnboardApiKeyStep2 => "步骤 2.  把密钥粘贴到下方并按 Enter。",
-        MessageId::OnboardApiKeySavedHint => {
-            "保存到 ~/.udas/config.toml，因此在任何目录下都生效。"
-        }
+        MessageId::OnboardApiKeySavedHint => "保存到 ~/.udas/config.toml，因此在任何目录下都生效。",
         MessageId::OnboardApiKeyFormatHint => "请完整粘贴密钥（不要含空格或换行）。",
         MessageId::OnboardApiKeyPlaceholder => "（在此粘贴密钥）",
         MessageId::OnboardApiKeyLabel => "密钥: ",

@@ -1,4 +1,4 @@
-﻿//! Slash command registry and dispatch system
+//! Slash command registry and dispatch system
 //!
 //! This module provides a modular command system inspired by Codex-rs.
 //! Commands are organized by category and dispatched through a central registry.
@@ -655,22 +655,24 @@ pub fn execute(cmd: &str, app: &mut App) -> CommandResult {
                             Semantic mode enabled. Next UDAS computation will use BGE-M3.\n\
                             Start the service: udas-cli embed-service start\n\
                             Toggle back with /bge",
-                            old.label(), new_mode.label()
+                            old.label(),
+                            new_mode.label()
                         ),
                         EmbeddingMode::Fnv => format!(
                             "UDAS embedding: {} -> {}\n\n\
                             Fast hash mode. No model loading required.\n\
                             Toggle back with /bge",
-                            old.label(), new_mode.label()
+                            old.label(),
+                            new_mode.label()
                         ),
                     };
                     CommandResult::message(msg)
                 }
                 Err(_) => CommandResult::error(
-                    "UDAS computation in progress, cannot toggle embedding mode now. Try again later."
+                    "UDAS computation in progress, cannot toggle embedding mode now. Try again later.",
                 ),
             }
-        },
+        }
 
         // RLM command
         "rlm" | "recursive" | "digui" => rlm(app, arg),

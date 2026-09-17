@@ -21,13 +21,13 @@
 //! interference model. See `interference.rs` and
 //! `UDAS-INTERFERENCE-ARCHITECTURE.md` for the mathematical framework.
 
-pub mod types;
-pub mod restoration;
-pub mod geometry;
+pub mod breaker;
 pub mod density;
+pub mod engine;
+pub mod env_signal;
+pub mod geometry;
 pub mod interference;
 pub mod memory;
 pub mod precision_control;
-pub mod breaker;
-pub mod engine;
-pub mod env_signal;
+pub mod restoration;
+pub mod types;

@@ -1,4 +1,4 @@
-﻿//! Transport abstraction for IPC.
+//! Transport abstraction for IPC.
 //!
 //! Supports:
 //! - `local-socket` feature (default): interprocess local_socket
@@ -104,10 +104,7 @@ pub mod local_socket {
         /// Strips the Windows named pipe prefix if present, since
         /// `GenericNamespaced` prepends it automatically.
         fn make_name(&self) -> anyhow::Result<interprocess::local_socket::Name<'_>> {
-            let clean = self
-                .name
-                .strip_prefix(r"\\.\pipe\")
-                .unwrap_or(&self.name);
+            let clean = self.name.strip_prefix(r"\\.\pipe\").unwrap_or(&self.name);
             clean
                 .to_ns_name::<GenericNamespaced>()
                 .map_err(|e| ServiceError::Transport(format!("invalid name '{}': {e}", self.name)))
@@ -188,9 +185,9 @@ pub mod tcp {
     #[async_trait]
     impl Transport for TcpTransport {
         async fn listen(&self) -> anyhow::Result<BoxListener> {
-            let listener = TcpListener::bind(&self.addr)
-                .await
-                .map_err(|e| ServiceError::Transport(format!("bind '{}' failed: {e}", self.addr)))?;
+            let listener = TcpListener::bind(&self.addr).await.map_err(|e| {
+                ServiceError::Transport(format!("bind '{}' failed: {e}", self.addr))
+            })?;
             tracing::info!(addr = %self.addr, "tcp listener bound");
             Ok(Box::new(TcpListenerWrapper { listener }))
         }

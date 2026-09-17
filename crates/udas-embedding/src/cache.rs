@@ -49,7 +49,11 @@ impl<E: Embedder + 'static> CachedEmbedder<E> {
                 }
             }
         }
-        tracing::info!("CachedEmbedder: loaded {} entries from {}", initial_cache.len(), cache_dir.display());
+        tracing::info!(
+            "CachedEmbedder: loaded {} entries from {}",
+            initial_cache.len(),
+            cache_dir.display()
+        );
 
         Self {
             inner: Arc::new(inner),
@@ -145,9 +149,7 @@ fn read_embedding(path: &Path) -> Result<Embedding> {
         anyhow::bail!("Cache file too short: {}", path.display());
     }
 
-    let dim = u32::from_le_bytes([
-        data[0], data[1], data[2], data[3],
-    ]) as usize;
+    let dim = u32::from_le_bytes([data[0], data[1], data[2], data[3]]) as usize;
 
     let expected_len = 4 + dim * 8;
     if data.len() < expected_len {

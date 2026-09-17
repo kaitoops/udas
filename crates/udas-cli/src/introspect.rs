@@ -5,9 +5,9 @@
 //! - Hot file (UDAS-STATE.md) read/update/backup management
 //! - Timeline logging and correction chain queries
 
-use std::path::PathBuf;
 use anyhow::{Context, Result, bail};
 use clap::Subcommand;
+use std::path::PathBuf;
 use udas_introspect::{
     CslClassifier, DiffAnalyzer, HotFileManager, TimelineEntry, TimelineEntryKind, TimelineLogger,
 };
@@ -77,35 +77,26 @@ pub enum IntrospectAction {
 /// Handle the introspect subcommand.
 pub fn handle(action: IntrospectAction) -> Result<()> {
     match action {
-        IntrospectAction::Classify { staged, range } => {
-            handle_classify(staged, range)
-        }
-        IntrospectAction::StateRead => {
-            handle_state_read()
-        }
+        IntrospectAction::Classify { staged, range } => handle_classify(staged, range),
+        IntrospectAction::StateRead => handle_state_read(),
         IntrospectAction::StateUpdateSection { header, content } => {
             handle_state_update_section(&header, &content)
         }
-        IntrospectAction::StateBackups => {
-            handle_state_backups()
-        }
-        IntrospectAction::StateRollback { slot } => {
-            handle_state_rollback(slot)
-        }
-        IntrospectAction::TimelineRead { last } => {
-            handle_timeline_read(last)
-        }
+        IntrospectAction::StateBackups => handle_state_backups(),
+        IntrospectAction::StateRollback { slot } => handle_state_rollback(slot),
+        IntrospectAction::TimelineRead { last } => handle_timeline_read(last),
         IntrospectAction::TimelineAdd {
             description,
             kind,
             csl_level,
             correction_for,
-        } => {
-            handle_timeline_add(&description, &kind, csl_level.as_deref(), correction_for.as_deref())
-        }
-        IntrospectAction::TimelineChain { entry_id } => {
-            handle_timeline_chain(&entry_id)
-        }
+        } => handle_timeline_add(
+            &description,
+            &kind,
+            csl_level.as_deref(),
+            correction_for.as_deref(),
+        ),
+        IntrospectAction::TimelineChain { entry_id } => handle_timeline_chain(&entry_id),
     }
 }
 
@@ -137,7 +128,10 @@ fn handle_classify(staged: bool, range: Option<String>) -> Result<()> {
         eprintln!("[introspect] analyzing range: {}", r);
         analyzer.analyze_range(r)?
     } else {
-        eprintln!("[introspect] analyzing {} changes", if staged { "staged" } else { "unstaged" });
+        eprintln!(
+            "[introspect] analyzing {} changes",
+            if staged { "staged" } else { "unstaged" }
+        );
         analyzer.analyze(staged)?
     };
 
@@ -231,7 +225,11 @@ fn handle_timeline_read(last: Option<usize>) -> Result<()> {
         return Ok(());
     }
 
-    eprintln!("[introspect] {} entries (total: {})", entries.len(), logger.count()?);
+    eprintln!(
+        "[introspect] {} entries (total: {})",
+        entries.len(),
+        logger.count()?
+    );
 
     for entry in &entries {
         let json = serde_json::to_string(entry)?;
@@ -287,7 +285,11 @@ fn handle_timeline_chain(entry_id: &str) -> Result<()> {
         bail!("entry not found: {}", entry_id);
     }
 
-    eprintln!("[introspect] correction chain for {} ({} entries)", entry_id, chain.len());
+    eprintln!(
+        "[introspect] correction chain for {} ({} entries)",
+        entry_id,
+        chain.len()
+    );
 
     for entry in &chain {
         let json = serde_json::to_string(entry)?;
@@ -308,6 +310,9 @@ fn parse_entry_kind(s: &str) -> Result<TimelineEntryKind> {
         "defect_found" | "defect-found" => Ok(TimelineEntryKind::DefectFound),
         "defect_resolved" | "defect-resolved" => Ok(TimelineEntryKind::DefectResolved),
         "verification" => Ok(TimelineEntryKind::Verification),
-        _ => bail!("unknown entry kind: '{}' (valid: csl_classified, introspection, note, defect_found, defect_resolved, verification, correction, hot_file_updated)", s),
+        _ => bail!(
+            "unknown entry kind: '{}' (valid: csl_classified, introspection, note, defect_found, defect_resolved, verification, correction, hot_file_updated)",
+            s
+        ),
     }
 }

@@ -19,7 +19,10 @@ impl Angle {
     /// Create from degrees. Automatically normalises to [0, 360).
     pub fn from_degrees(deg: f64) -> Self {
         let d = deg.rem_euclid(360.0);
-        Self { degrees: d, radians: d.to_radians() }
+        Self {
+            degrees: d,
+            radians: d.to_radians(),
+        }
     }
 
     /// Which quadrant does this angle fall in?
@@ -27,7 +30,9 @@ impl Angle {
     ///   1 = [90, 180) semantic
     ///   2 = [180, 270) entity
     ///   3 = [270, 360) cross-domain/conflict
-    pub fn quadrant(&self) -> u8 { (self.degrees / 90.0).floor() as u8 % 4 }
+    pub fn quadrant(&self) -> u8 {
+        (self.degrees / 90.0).floor() as u8 % 4
+    }
 }
 
 /// A 2-D point on the emergent MDS disk.
@@ -99,7 +104,10 @@ impl Complex {
 
     /// Complex conjugate z* = re - i·im.
     pub fn conjugate(self) -> Self {
-        Self { re: self.re, im: -self.im }
+        Self {
+            re: self.re,
+            im: -self.im,
+        }
     }
 
     /// Argument (phase) φ = atan2(im, re).

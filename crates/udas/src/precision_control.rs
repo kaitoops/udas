@@ -13,7 +13,7 @@
 //! 2026-07-25: Switched from `DensityField` to `InterferenceField` to
 //! support the interference-based collapse model.
 
-use crate::interference::{contrast_ratio, InterferenceField};
+use crate::interference::{InterferenceField, contrast_ratio};
 use crate::types::{GrowthPath, PrecisionTier};
 
 /// Growth rate tracking for dynamic K (gap_2).
@@ -47,10 +47,10 @@ impl GrowthTracker {
 
     /// Growth rate = median of (CR_t - CR_{t-1}) / Δt in sliding window.
     fn compute_growth_rate(&self) -> Option<f64> {
-        if self.recent_cr.len() < 2 { return None; }
-        let diffs: Vec<f64> = self.recent_cr.windows(2)
-            .map(|w| w[1] - w[0])
-            .collect();
+        if self.recent_cr.len() < 2 {
+            return None;
+        }
+        let diffs: Vec<f64> = self.recent_cr.windows(2).map(|w| w[1] - w[0]).collect();
         let mut sorted = diffs.clone();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
         Some(sorted[sorted.len() / 2])
@@ -63,7 +63,9 @@ impl GrowthTracker {
 
     /// Upper quartile (Q3) of historical CR values — growth_high threshold.
     pub fn growth_high(&self) -> Option<f64> {
-        if self.cr_history.len() < 4 { return None; }
+        if self.cr_history.len() < 4 {
+            return None;
+        }
         let mut sorted = self.cr_history.clone();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let idx = (sorted.len() * 3) / 4;
@@ -72,7 +74,9 @@ impl GrowthTracker {
 
     /// Lower quartile (Q1) of historical CR values — growth_low threshold.
     pub fn growth_low(&self) -> Option<f64> {
-        if self.cr_history.len() < 4 { return None; }
+        if self.cr_history.len() < 4 {
+            return None;
+        }
         let mut sorted = self.cr_history.clone();
         sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
         let idx = sorted.len() / 4;
@@ -135,11 +139,17 @@ impl BudgetManager {
 
     /// Consume budget for one restoration round.
     pub fn spend(&mut self, rounds: usize) {
-        self.remaining = self.remaining.saturating_sub(rounds * self.cost_per_restoration);
+        self.remaining = self
+            .remaining
+            .saturating_sub(rounds * self.cost_per_restoration);
     }
 
     /// Check downgrade triggers and apply if needed.
-    pub fn check_downgrade(&mut self, field: &InterferenceField, resolution: usize) -> PrecisionTier {
+    pub fn check_downgrade(
+        &mut self,
+        field: &InterferenceField,
+        resolution: usize,
+    ) -> PrecisionTier {
         let budget_threshold = (self.total as f64 * 0.3) as usize;
         let cr = contrast_ratio(field, resolution);
         let tau_downgrade = field.tau_base * 2.0; // 4.0
@@ -199,7 +209,9 @@ pub fn adaptive_step_size(
 
 /// Compute the current gamma (median gradient magnitude of observed gradients).
 pub fn compute_gamma(observed_gradients: &[f64]) -> Option<f64> {
-    if observed_gradients.is_empty() { return None; }
+    if observed_gradients.is_empty() {
+        return None;
+    }
     let mut sorted = observed_gradients.to_vec();
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
     Some(sorted[sorted.len() / 2])
@@ -255,7 +267,13 @@ impl PrecisionController {
         }
         let gamma = compute_gamma(&self.observed_gradients);
         let step_size = gamma.map(|g| {
-            adaptive_step_size(std::f64::consts::PI / 8.0, current_round, k_eff, gradient_mag.unwrap_or(0.0), g)
+            adaptive_step_size(
+                std::f64::consts::PI / 8.0,
+                current_round,
+                k_eff,
+                gradient_mag.unwrap_or(0.0),
+                g,
+            )
         });
 
         PrecisionAction {
@@ -303,7 +321,10 @@ mod tests {
     fn adaptive_step_decreases_with_flat_gradient() {
         let step_steep = adaptive_step_size(1.0, 5, 20, 10.0, 1.0);
         let step_flat = adaptive_step_size(1.0, 5, 20, 0.01, 1.0);
-        assert!(step_steep > step_flat, "steep gradient should yield larger step");
+        assert!(
+            step_steep > step_flat,
+            "steep gradient should yield larger step"
+        );
     }
 
     #[test]

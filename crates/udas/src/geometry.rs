@@ -24,10 +24,24 @@ pub fn cosine_distance_matrix(embeddings: &[Embedding]) -> anyhow::Result<Vec<Ve
     let mut matrix = vec![vec![0.0; n]; n];
     for i in 0..n {
         for j in 0..n {
-            if i == j { continue; }
-            let dot: f64 = embeddings[i].iter().zip(&embeddings[j]).map(|(a, b)| a * b).sum();
-            let norm_i = embeddings[i].iter().map(|v: &f64| v.powi(2)).sum::<f64>().sqrt();
-            let norm_j = embeddings[j].iter().map(|v: &f64| v.powi(2)).sum::<f64>().sqrt();
+            if i == j {
+                continue;
+            }
+            let dot: f64 = embeddings[i]
+                .iter()
+                .zip(&embeddings[j])
+                .map(|(a, b)| a * b)
+                .sum();
+            let norm_i = embeddings[i]
+                .iter()
+                .map(|v: &f64| v.powi(2))
+                .sum::<f64>()
+                .sqrt();
+            let norm_j = embeddings[j]
+                .iter()
+                .map(|v: &f64| v.powi(2))
+                .sum::<f64>()
+                .sqrt();
             matrix[i][j] = 1.0 - dot / (norm_i * norm_j).max(f64::EPSILON);
         }
     }
@@ -69,8 +83,12 @@ fn classical_mds_2d(distances: &[Vec<f64>]) -> anyhow::Result<Vec<DiskPoint>> {
             grand_mean += d_sq[i][j];
         }
     }
-    for i in 0..n { row_means[i] /= n as f64; }
-    for j in 0..n { col_means[j] /= n as f64; }
+    for i in 0..n {
+        row_means[i] /= n as f64;
+    }
+    for j in 0..n {
+        col_means[j] /= n as f64;
+    }
     grand_mean /= (n * n) as f64;
 
     let mut b = vec![vec![0.0; n]; n];
@@ -111,12 +129,14 @@ fn classical_mds_2d(distances: &[Vec<f64>]) -> anyhow::Result<Vec<DiskPoint>> {
 /// Suitable for small matrices (n <= 50). O(n^3) per sweep, typically 5-10 sweeps.
 fn jacobi_eigen(matrix: &[Vec<f64>]) -> anyhow::Result<(Vec<f64>, Vec<Vec<f64>>)> {
     let n = matrix.len();
-    if n == 0 { anyhow::bail!("empty matrix"); }
+    if n == 0 {
+        anyhow::bail!("empty matrix");
+    }
 
     let mut a: Vec<Vec<f64>> = matrix.iter().map(|r| r.to_vec()).collect();
-    let mut v: Vec<Vec<f64>> = (0..n).map(|i| {
-        (0..n).map(|j| if i == j { 1.0 } else { 0.0 }).collect()
-    }).collect();
+    let mut v: Vec<Vec<f64>> = (0..n)
+        .map(|i| (0..n).map(|j| if i == j { 1.0 } else { 0.0 }).collect())
+        .collect();
 
     let max_sweeps = 100;
     let tolerance = 1e-12;
@@ -137,7 +157,9 @@ fn jacobi_eigen(matrix: &[Vec<f64>]) -> anyhow::Result<(Vec<f64>, Vec<Vec<f64>>)
         for p in 0..n {
             for q in (p + 1)..n {
                 let apq = a[p][q];
-                if apq.abs() < tolerance { continue; }
+                if apq.abs() < tolerance {
+                    continue;
+                }
 
                 let app = a[p][p];
                 let aqq = a[q][q];
@@ -173,9 +195,7 @@ fn jacobi_eigen(matrix: &[Vec<f64>]) -> anyhow::Result<(Vec<f64>, Vec<Vec<f64>>)
     // Extract eigenvalues (diagonal) and eigenvectors (columns of v)
     let eigenvalues: Vec<f64> = (0..n).map(|i| a[i][i]).collect();
     // eigenvectors[k] = column k of v = [v[0][k], v[1][k], ..., v[n-1][k]]
-    let eigenvectors: Vec<Vec<f64>> = (0..n).map(|k| {
-        (0..n).map(|i| v[i][k]).collect()
-    }).collect();
+    let eigenvectors: Vec<Vec<f64>> = (0..n).map(|k| (0..n).map(|i| v[i][k]).collect()).collect();
 
     Ok((eigenvalues, eigenvectors))
 }
@@ -215,7 +235,11 @@ pub fn out_of_sample_project(
         anyhow::bail!("need at least 1 existing point for projection");
     }
     if n != existing_embeddings.len() {
-        anyhow::bail!("mismatch: {} points vs {} embeddings", n, existing_embeddings.len());
+        anyhow::bail!(
+            "mismatch: {} points vs {} embeddings",
+            n,
+            existing_embeddings.len()
+        );
     }
 
     // Compute cosine distances from new embedding to all existing
@@ -230,7 +254,10 @@ pub fn out_of_sample_project(
     if n == 1 {
         // Single reference: place at distance d along x-axis from existing point
         let p = existing_points[0];
-        return Ok(DiskPoint { x: p.x + dists[0], y: p.y });
+        return Ok(DiskPoint {
+            x: p.x + dists[0],
+            y: p.y,
+        });
     }
 
     if n == 2 {
@@ -263,7 +290,7 @@ pub fn out_of_sample_project(
         return Ok(DiskPoint {
             x: p0.x + a * ux - h * uy,
             y: p0.y + a * uy + h * ux,
-        })
+        });
     }
 
     // n >= 3: least-squares trilateration
@@ -277,7 +304,7 @@ pub fn out_of_sample_project(
     let d0_sq = dists[0] * dists[0];
 
     let mut ata = [[0.0f64; 2]; 2]; // 2x2 normal equations matrix
-    let mut atb = [0.0f64; 2];      // 2x1 RHS
+    let mut atb = [0.0f64; 2]; // 2x1 RHS
 
     for i in 1..n {
         let pi = existing_points[i];
@@ -287,9 +314,7 @@ pub fn out_of_sample_project(
         let row_x = 2.0 * (pi.x - p0.x);
         let row_y = 2.0 * (pi.y - p0.y);
         // RHS: d0^2 - di^2 + |pi|^2 - |p0|^2
-        let rhs = d0_sq - di_sq
-            + (pi.x * pi.x + pi.y * pi.y)
-            - (p0.x * p0.x + p0.y * p0.y);
+        let rhs = d0_sq - di_sq + (pi.x * pi.x + pi.y * pi.y) - (p0.x * p0.x + p0.y * p0.y);
 
         ata[0][0] += row_x * row_x;
         ata[0][1] += row_x * row_y;
@@ -309,7 +334,10 @@ pub fn out_of_sample_project(
             x += p.x;
             y += p.y;
         }
-        return Ok(DiskPoint { x: x / n as f64, y: y / n as f64 });
+        return Ok(DiskPoint {
+            x: x / n as f64,
+            y: y / n as f64,
+        });
     }
 
     let x = (ata[1][1] * atb[0] - ata[0][1] * atb[1]) / det;
@@ -350,8 +378,6 @@ pub fn incremental_mds_refinement(
     // or reflected relative to the old one, align them via Procrustes.
     procrustes_align(&new_coords, points)
 }
-
-
 
 // ─── MDS Phase Computation (for Complex Framework) ─────────────────────
 //
@@ -433,10 +459,26 @@ fn procrustes_align(source: &[DiskPoint], target: &[DiskPoint]) -> anyhow::Resul
     }
 
     // Step 2: Compute cross-covariance H = source^T * target
-    let h11: f64 = src_centered.iter().zip(&tgt_centered).map(|(s, t)| s.x * t.x).sum();
-    let h12: f64 = src_centered.iter().zip(&tgt_centered).map(|(s, t)| s.x * t.y).sum();
-    let h21: f64 = src_centered.iter().zip(&tgt_centered).map(|(s, t)| s.y * t.x).sum();
-    let h22: f64 = src_centered.iter().zip(&tgt_centered).map(|(s, t)| s.y * t.y).sum();
+    let h11: f64 = src_centered
+        .iter()
+        .zip(&tgt_centered)
+        .map(|(s, t)| s.x * t.x)
+        .sum();
+    let h12: f64 = src_centered
+        .iter()
+        .zip(&tgt_centered)
+        .map(|(s, t)| s.x * t.y)
+        .sum();
+    let h21: f64 = src_centered
+        .iter()
+        .zip(&tgt_centered)
+        .map(|(s, t)| s.y * t.x)
+        .sum();
+    let h22: f64 = src_centered
+        .iter()
+        .zip(&tgt_centered)
+        .map(|(s, t)| s.y * t.y)
+        .sum();
 
     // Step 3: SVD of 2x2 H -- for 2D, use analytic formula
     // H = U Sigma V^T, optimal R = V U^T
@@ -466,7 +508,10 @@ fn center_points(points: &[DiskPoint]) -> (Vec<DiskPoint>, DiskPoint) {
     let cy: f64 = points.iter().map(|p| p.y).sum::<f64>() / n;
     let centered: Vec<DiskPoint> = points
         .iter()
-        .map(|p| DiskPoint { x: p.x - cx, y: p.y - cy })
+        .map(|p| DiskPoint {
+            x: p.x - cx,
+            y: p.y - cy,
+        })
         .collect();
     (centered, DiskPoint { x: cx, y: cy })
 }
@@ -570,11 +615,7 @@ mod tests {
     #[test]
     fn cold_start_mds_non_degenerate() {
         // Ensure the 3 points are not all at the origin
-        let embs = [
-            vec![1.0, 0.0],
-            vec![0.0, 1.0],
-            vec![1.0, 1.0],
-        ];
+        let embs = [vec![1.0, 0.0], vec![0.0, 1.0], vec![1.0, 1.0]];
         let points = cold_start_mds(&embs).unwrap();
         let has_nonzero = points.iter().any(|p| p.x.abs() > 1e-6 || p.y.abs() > 1e-6);
         assert!(has_nonzero, "MDS produced all-zero coordinates");
@@ -591,24 +632,26 @@ mod tests {
         let dx = projected.x - existing_pts[0].x;
         let dy = projected.y - existing_pts[0].y;
         let dist = (dx * dx + dy * dy).sqrt();
-        assert!((dist - 1.0).abs() < 0.1, "projected distance = {}, expected ~1.0", dist);
+        assert!(
+            (dist - 1.0).abs() < 0.1,
+            "projected distance = {}, expected ~1.0",
+            dist
+        );
     }
 
     #[test]
     fn out_of_sample_two_references() {
-        let existing_pts = vec![
-            DiskPoint { x: 0.0, y: 0.0 },
-            DiskPoint { x: 2.0, y: 0.0 },
-        ];
-        let existing_embs = vec![
-            vec![1.0, 0.0, 0.0],
-            vec![0.0, 1.0, 0.0],
-        ];
+        let existing_pts = vec![DiskPoint { x: 0.0, y: 0.0 }, DiskPoint { x: 2.0, y: 0.0 }];
+        let existing_embs = vec![vec![1.0, 0.0, 0.0], vec![0.0, 1.0, 0.0]];
         let new_emb = vec![0.0, 0.0, 1.0]; // equidistant from both -> distance = 1.0
 
         let projected = out_of_sample_project(&new_emb, &existing_pts, &existing_embs).unwrap();
         // Should be approximately at (1.0, +/-something) -- equidistant from (0,0) and (2,0)
-        assert!((projected.x - 1.0).abs() < 0.2, "x = {}, expected ~1.0", projected.x);
+        assert!(
+            (projected.x - 1.0).abs() < 0.2,
+            "x = {}, expected ~1.0",
+            projected.x
+        );
     }
 
     #[test]

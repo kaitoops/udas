@@ -111,11 +111,7 @@ pub fn verify_completeness(items: &[EvidenceItem]) -> anyhow::Result<f64> {
 /// - `score`: average relevance × completeness (information density)
 /// - `completeness`: field coverage ratio from step 4
 /// - `source_reliability`: unique-source diversity ratio
-pub fn organise_ledger(
-    angle: Angle,
-    items: &[EvidenceItem],
-    completeness: f64,
-) -> EvidenceLedger {
+pub fn organise_ledger(angle: Angle, items: &[EvidenceItem], completeness: f64) -> EvidenceLedger {
     let avg_relevance: f64 = if items.is_empty() {
         0.0
     } else {
@@ -320,9 +316,7 @@ mod tests {
     async fn restore_full_pipeline_with_mock() {
         let restorer = MockRestorer;
         let angle = Angle::from_degrees(45.0);
-        let ledger = restore(angle, "test problem", &restorer)
-            .await
-            .unwrap();
+        let ledger = restore(angle, "test problem", &restorer).await.unwrap();
 
         assert_eq!(ledger.quadrant, "temporal");
         assert_eq!(ledger.evidence_items.len(), 1);

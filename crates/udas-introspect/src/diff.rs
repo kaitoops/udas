@@ -4,8 +4,8 @@
 //! that feed into CSL classification. Does NOT do semantic analysis —
 //! only extracts facts about what changed at the code structure level.
 
-use std::path::PathBuf;
 use anyhow::Result;
+use std::path::PathBuf;
 
 /// Structural features extracted from a git diff.
 ///
@@ -295,19 +295,28 @@ impl DiffAnalyzer {
         }
 
         // Set comment_only: true if there were changes but all were comments/blank
-        features.comment_only = !found_non_comment
-            && (features.lines_added > 0 || features.lines_removed > 0);
+        features.comment_only =
+            !found_non_comment && (features.lines_added > 0 || features.lines_removed > 0);
 
         // Modified pub fns = intersection of added and removed (signature changed)
         // A function that was both removed and added in the same diff = modified
-        let added_set: std::collections::HashSet<_> = features.pub_fns_added.iter().cloned().collect();
-        let removed_set: std::collections::HashSet<_> = features.pub_fns_removed.iter().cloned().collect();
-        let modified = added_set.intersection(&removed_set).cloned().collect::<Vec<_>>();
+        let added_set: std::collections::HashSet<_> =
+            features.pub_fns_added.iter().cloned().collect();
+        let removed_set: std::collections::HashSet<_> =
+            features.pub_fns_removed.iter().cloned().collect();
+        let modified = added_set
+            .intersection(&removed_set)
+            .cloned()
+            .collect::<Vec<_>>();
         features.pub_fns_modified = modified;
 
         // Remove modified from added/removed (they were counted in both)
-        features.pub_fns_added.retain(|f| !features.pub_fns_modified.contains(f));
-        features.pub_fns_removed.retain(|f| !features.pub_fns_modified.contains(f));
+        features
+            .pub_fns_added
+            .retain(|f| !features.pub_fns_modified.contains(f));
+        features
+            .pub_fns_removed
+            .retain(|f| !features.pub_fns_modified.contains(f));
 
         Ok(features)
     }
@@ -318,10 +327,7 @@ fn extract_pub_fn(line: &str) -> Option<String> {
     let trimmed = line.trim();
     if trimmed.starts_with("pub fn ") || trimmed.starts_with("pub async fn ") {
         // Extract function name (first identifier after "fn ")
-        let after_fn = trimmed
-            .find("fn ")
-            .map(|i| &trimmed[i + 3..])
-            .unwrap_or("");
+        let after_fn = trimmed.find("fn ").map(|i| &trimmed[i + 3..]).unwrap_or("");
         let name = after_fn
             .split(|c: char| c == '(' || c == '<' || c.is_whitespace())
             .next()
@@ -339,11 +345,7 @@ fn extract_trait_impl(line: &str) -> Option<String> {
     // Match "impl TraitName for Type" or "impl TraitName for Type<T>"
     if trimmed.starts_with("impl ") && trimmed.contains(" for ") {
         let after_impl = &trimmed[5..];
-        let trait_name = after_impl
-            .split(" for ")
-            .next()
-            .unwrap_or("")
-            .trim();
+        let trait_name = after_impl.split(" for ").next().unwrap_or("").trim();
         if !trait_name.is_empty() {
             return Some(format!("impl {}", trait_name));
         }
@@ -360,7 +362,20 @@ fn extract_cargo_dep(line: &str) -> Option<String> {
         // Filter out known non-dependency keys
         if !key.is_empty()
             && !key.starts_with('[')
-            && !["version", "edition", "name", "description", "license", "repository", "default-run", "rust-version", "features", "default", "path"].contains(&key)
+            && ![
+                "version",
+                "edition",
+                "name",
+                "description",
+                "license",
+                "repository",
+                "default-run",
+                "rust-version",
+                "features",
+                "default",
+                "path",
+            ]
+            .contains(&key)
             && !key.starts_with('"')
         {
             return Some(key.to_string());
@@ -435,23 +450,41 @@ mod tests {
 
     #[test]
     fn test_extract_pub_fn() {
-        assert_eq!(extract_pub_fn("    pub fn new(config: Config) -> Self {"), Some("pub fn new".into()));
-        assert_eq!(extract_pub_fn("    pub async fn embed(&self, text: &str) -> Result<Embedding> {"), Some("pub fn embed".into()));
+        assert_eq!(
+            extract_pub_fn("    pub fn new(config: Config) -> Self {"),
+            Some("pub fn new".into())
+        );
+        assert_eq!(
+            extract_pub_fn("    pub async fn embed(&self, text: &str) -> Result<Embedding> {"),
+            Some("pub fn embed".into())
+        );
         assert_eq!(extract_pub_fn("    fn private() {}"), None);
         assert_eq!(extract_pub_fn("    pub fn"), None);
     }
 
     #[test]
     fn test_extract_trait_impl() {
-        assert_eq!(extract_trait_impl("impl Embedder for RemoteEmbedder {"), Some("impl Embedder".into()));
-        assert_eq!(extract_trait_impl("impl LlmRestorer for DeepSeekClient {"), Some("impl LlmRestorer".into()));
-        assert_eq!(extract_trait_impl("impl Clone for Foo {"), Some("impl Clone".into()));
+        assert_eq!(
+            extract_trait_impl("impl Embedder for RemoteEmbedder {"),
+            Some("impl Embedder".into())
+        );
+        assert_eq!(
+            extract_trait_impl("impl LlmRestorer for DeepSeekClient {"),
+            Some("impl LlmRestorer".into())
+        );
+        assert_eq!(
+            extract_trait_impl("impl Clone for Foo {"),
+            Some("impl Clone".into())
+        );
         assert_eq!(extract_trait_impl("struct Foo {}"), None);
     }
 
     #[test]
     fn test_extract_cargo_dep() {
-        assert_eq!(extract_cargo_dep("udas-embedding = { path = \"../udas-embedding\" }"), Some("udas-embedding".into()));
+        assert_eq!(
+            extract_cargo_dep("udas-embedding = { path = \"../udas-embedding\" }"),
+            Some("udas-embedding".into())
+        );
         assert_eq!(extract_cargo_dep("serde = \"1.0\""), Some("serde".into()));
         assert_eq!(extract_cargo_dep("version = \"0.8.39\""), None);
         assert_eq!(extract_cargo_dep("[dependencies]"), None);
@@ -459,8 +492,14 @@ mod tests {
 
     #[test]
     fn test_extract_workspace_member() {
-        assert_eq!(extract_workspace_member("    \"crates/udas-introspect\","), Some("udas-introspect".into()));
-        assert_eq!(extract_workspace_member("    \"crates/cli\","), Some("cli".into()));
+        assert_eq!(
+            extract_workspace_member("    \"crates/udas-introspect\","),
+            Some("udas-introspect".into())
+        );
+        assert_eq!(
+            extract_workspace_member("    \"crates/cli\","),
+            Some("cli".into())
+        );
         assert_eq!(extract_workspace_member("udas-embedding = { }"), None);
     }
 

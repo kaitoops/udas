@@ -1,4 +1,4 @@
-﻿//! Embedding service client.
+//! Embedding service client.
 //!
 //! Connects to a running [`crate::server::EmbedServer`] over IPC and provides:
 //! - [`EmbedClient`] — low-level request/response client with typed methods
@@ -19,10 +19,10 @@
 //! let emb = remote.embed("hello world").await?; // via Embedder trait
 //! ```
 
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
 use anyhow::Result;
 use async_trait::async_trait;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use tokio::sync::Mutex;
 use tracing::debug;
 
@@ -32,7 +32,7 @@ use crate::config::ClientConfig;
 use crate::error::ServiceError;
 use crate::framing::{read_response, write_request};
 use crate::protocol::{InfoResult, Request, RequestId, Response, ResponseResult};
-use crate::transport::{create_transport, BoxStream};
+use crate::transport::{BoxStream, create_transport};
 
 // ─── EmbedClient ───────────────────────────────────────────────────────
 
@@ -146,14 +146,9 @@ impl EmbedClient {
         write_request(&mut *stream, &req).await?;
 
         // Read response with timeout
-        let resp = tokio::time::timeout(
-            self.config.request_timeout,
-            read_response(&mut *stream),
-        )
-        .await
-        .map_err(|_| {
-            ServiceError::Timeout(self.config.request_timeout)
-        })??;
+        let resp = tokio::time::timeout(self.config.request_timeout, read_response(&mut *stream))
+            .await
+            .map_err(|_| ServiceError::Timeout(self.config.request_timeout))??;
 
         // Check for RPC error
         if resp.is_error() {
@@ -253,7 +248,10 @@ mod tests {
         config.local_socket_name = "udas-embed-test-nonexistent".to_string();
 
         let result = EmbedClient::connect(config).await;
-        assert!(result.is_err(), "Should fail to connect to non-existent server");
+        assert!(
+            result.is_err(),
+            "Should fail to connect to non-existent server"
+        );
     }
 
     #[tokio::test]

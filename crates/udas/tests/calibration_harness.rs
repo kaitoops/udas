@@ -24,8 +24,8 @@ use deepseek_udas::engine::{CrSample, UdasEngine};
 use deepseek_udas::restoration::LlmRestorer;
 use deepseek_udas::types::{Angle, Embedding, EvidenceItem, MeasurementInput};
 use std::sync::Arc;
-use udas_embedding::runtime::RuntimeEmbedder;
 use udas_embedding::Embedder;
+use udas_embedding::runtime::RuntimeEmbedder;
 
 /// Semantic restorer: relevance strength is anchored on the question's
 /// known-answer category, text is embedded with the real RuntimeEmbedder.
@@ -147,7 +147,11 @@ async fn run_calibration_harness() {
     let runs_dir = crate_root.join("calibration").join("runs");
     fs::create_dir_all(&runs_dir).expect("create runs dir");
 
-    let questions = load_questions(&crate_root.join("calibration").join("known-answer-set.jsonl"));
+    let questions = load_questions(
+        &crate_root
+            .join("calibration")
+            .join("known-answer-set.jsonl"),
+    );
     assert!(
         questions.len() >= 20,
         "expected >=20 questions, got {}",
@@ -197,15 +201,29 @@ async fn run_calibration_harness() {
         });
 
         let fname = run_filename(&ts, &q.id);
-        fs::write(runs_dir.join(&fname), serde_json::to_string_pretty(&line).unwrap())
-            .expect("write run file");
+        fs::write(
+            runs_dir.join(&fname),
+            serde_json::to_string_pretty(&line).unwrap(),
+        )
+        .expect("write run file");
         written += 1;
 
-        println!("{} [{}] → {} ({} samples, {})", q.id, q.category, q.expected_outcome, samples.len(), outcome);
+        println!(
+            "{} [{}] → {} ({} samples, {})",
+            q.id,
+            q.category,
+            q.expected_outcome,
+            samples.len(),
+            outcome
+        );
     }
 
     println!("CALIBRATION_WRITE_COUNT={}", written);
-    assert_eq!(written, questions.len(), "should write one run file per question");
+    assert_eq!(
+        written,
+        questions.len(),
+        "should write one run file per question"
+    );
 }
 
 // ─── W3.2 / W3.3: τ_base grid scan ──────────────────────────────────────────
@@ -236,8 +254,12 @@ fn scan_md(rows: &[TauCell], recommended: f64, sensitivity: &[f64]) -> String {
     out.push_str(&chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
     out.push_str("\n> 判定：passed = 引擎在 active_search 中触发转移（transitioned=true）\n\n");
     out.push_str("## 混淆矩阵（各 τ_base × 类别）\n\n");
-    out.push_str("| τ_base | 收敛 通过/总数 | 发散 通过/总数（应低） | 边界 通过/总数 | 分离度 |\n");
-    out.push_str("|--------|----------------|------------------------|----------------|--------|\n");
+    out.push_str(
+        "| τ_base | 收敛 通过/总数 | 发散 通过/总数（应低） | 边界 通过/总数 | 分离度 |\n",
+    );
+    out.push_str(
+        "|--------|----------------|------------------------|----------------|--------|\n",
+    );
     for tau in TAU_GRID {
         let cell: Vec<&TauCell> = rows.iter().filter(|r| (r.tau - tau).abs() < 1e-9).collect();
         let mut pass = std::collections::HashMap::new();
@@ -263,7 +285,9 @@ fn scan_md(rows: &[TauCell], recommended: f64, sensitivity: &[f64]) -> String {
             "| {tau} | {cp_n}/{ct} | {dp_n}/{dt} | {bp_n}/{bt} | {sep:.3} |\n"
         ));
     }
-    out.push_str(&format!("\n## 推荐值\n\n推荐 τ_base = **{recommended}**（分离度最大）。\n"));
+    out.push_str(&format!(
+        "\n## 推荐值\n\n推荐 τ_base = **{recommended}**（分离度最大）。\n"
+    ));
     out.push_str(&format!(
         "敏感性区间（分离度 ≥ 峰值 90%）：**[{:?}]**\n\n",
         sensitivity
@@ -279,7 +303,11 @@ async fn run_tau_base_scan() {
     let scan_dir = crate_root.join("calibration").join("runs").join("tau-scan");
     fs::create_dir_all(&scan_dir).expect("create tau-scan dir");
 
-    let questions = load_questions(&crate_root.join("calibration").join("known-answer-set.jsonl"));
+    let questions = load_questions(
+        &crate_root
+            .join("calibration")
+            .join("known-answer-set.jsonl"),
+    );
     let embedder = Arc::new(RuntimeEmbedder::auto());
     println!("SCAN_EMBEDDER_BACKEND={}", embedder.backend_name());
 
@@ -364,7 +392,9 @@ async fn run_tau_base_scan() {
         .collect();
 
     let md = scan_md(&rows, recommended, &window);
-    let md_path = crate_root.join("calibration").join("03-tau-base-calibration.md");
+    let md_path = crate_root
+        .join("calibration")
+        .join("03-tau-base-calibration.md");
     fs::write(&md_path, &md).expect("write 03-tau-base-calibration.md");
     println!("TAU_SCAN_RECOMMENDED={recommended} MAX_SEP={max_sep:.3} WINDOW={window:?}");
     println!("TAU_SCAN_MD={}", md_path.display());
@@ -401,11 +431,17 @@ fn growth_scan_md(rows: &[GrowthCell], recommended: usize, sensitivity: &[usize]
     out.push_str("# growth_rate 窗口校准（W4）\n\n");
     out.push_str("> 生成时间：");
     out.push_str(&chrono::Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true));
-    out.push_str("\n> 判定：stagnation_detected = active_search 中任一 CR 采样被分类为 Stagnation\n");
-    out.push_str("> 目标：发散题被检出为停滞（gap_2 / W5 断路器据此提前收束），收敛题不误判为停滞\n\n");
+    out.push_str(
+        "\n> 判定：stagnation_detected = active_search 中任一 CR 采样被分类为 Stagnation\n",
+    );
+    out.push_str(
+        "> 目标：发散题被检出为停滞（gap_2 / W5 断路器据此提前收束），收敛题不误判为停滞\n\n",
+    );
     out.push_str("## 混淆矩阵（各窗口 × 类别）\n\n");
     out.push_str("| w | 收敛 停滞/总数（应低） | 发散 停滞/总数（应高） | 边界 检出/总数 | 分离度(dvr-cnv) |\n");
-    out.push_str("|---|-----------------------|-----------------------|---------------|-----------------|\n");
+    out.push_str(
+        "|---|-----------------------|-----------------------|---------------|-----------------|\n",
+    );
     for w in WINDOW_GRID {
         let cell: Vec<&GrowthCell> = rows.iter().filter(|r| r.window == w).collect();
         let mut stag = std::collections::HashMap::new();
@@ -433,13 +469,17 @@ fn growth_scan_md(rows: &[GrowthCell], recommended: usize, sensitivity: &[usize]
             "| {w} | {cvr_n}/{ct} | {dvr_n}/{dt} | {bnd_n}/{bt} | {sep:.3} |\n"
         ));
     }
-    out.push_str(&format!("\n## 推荐值\n\n推荐 w = **{recommended}**（分离度最大）。\n"));
+    out.push_str(&format!(
+        "\n## 推荐值\n\n推荐 w = **{recommended}**（分离度最大）。\n"
+    ));
     out.push_str(&format!(
         "敏感性区间（分离度 ≥ 峰值 90%）：**[{:?}]**\n\n",
         sensitivity
     ));
     out.push_str("## 说明\n\n- 是否改动默认 3 —— 由人类在本报告上批注决定，执行者不擅自改。\n");
-    out.push_str("- 该窗口供 W5.1 breaker.rs 消费现有 cr_series 的 growth_path 判定 Stagnation。\n");
+    out.push_str(
+        "- 该窗口供 W5.1 breaker.rs 消费现有 cr_series 的 growth_path 判定 Stagnation。\n",
+    );
     out
 }
 
@@ -447,10 +487,17 @@ fn growth_scan_md(rows: &[GrowthCell], recommended: usize, sensitivity: &[usize]
 async fn run_growth_window_scan() {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let crate_root = manifest_dir.parent().unwrap().parent().unwrap();
-    let scan_dir = crate_root.join("calibration").join("runs").join("growth-window-scan");
+    let scan_dir = crate_root
+        .join("calibration")
+        .join("runs")
+        .join("growth-window-scan");
     fs::create_dir_all(&scan_dir).expect("create growth-window-scan dir");
 
-    let questions = load_questions(&crate_root.join("calibration").join("known-answer-set.jsonl"));
+    let questions = load_questions(
+        &crate_root
+            .join("calibration")
+            .join("known-answer-set.jsonl"),
+    );
     let embedder = Arc::new(RuntimeEmbedder::auto());
     println!("GW_EMBEDDER_BACKEND={}", embedder.backend_name());
 
@@ -515,7 +562,10 @@ async fn run_growth_window_scan() {
 
     // Separation per window for the markdown recommendation.
     let sep_fn = |rows: &[GrowthCell], w: usize, cat: &str| -> f64 {
-        let tot = rows.iter().filter(|r| r.window == w && r.category == cat).count();
+        let tot = rows
+            .iter()
+            .filter(|r| r.window == w && r.category == cat)
+            .count();
         if tot == 0 {
             return 0.0;
         }
@@ -527,7 +577,12 @@ async fn run_growth_window_scan() {
 
     let best = WINDOW_GRID
         .iter()
-        .map(|&w| (sep_fn(&rows, w, "diverge") - sep_fn(&rows, w, "converge"), w))
+        .map(|&w| {
+            (
+                sep_fn(&rows, w, "diverge") - sep_fn(&rows, w, "converge"),
+                w,
+            )
+        })
         .max_by(|a, b| a.0.partial_cmp(&b.0).unwrap())
         .unwrap();
     let max_sep = best.0;
@@ -535,13 +590,13 @@ async fn run_growth_window_scan() {
     let interval: Vec<usize> = WINDOW_GRID
         .iter()
         .copied()
-        .filter(|&w| {
-            sep_fn(&rows, w, "diverge") - sep_fn(&rows, w, "converge") >= 0.90 * max_sep
-        })
+        .filter(|&w| sep_fn(&rows, w, "diverge") - sep_fn(&rows, w, "converge") >= 0.90 * max_sep)
         .collect();
 
     let md = growth_scan_md(&rows, recommended, &interval);
-    let md_path = crate_root.join("calibration").join("04-growth-rate-window-calibration.md");
+    let md_path = crate_root
+        .join("calibration")
+        .join("04-growth-rate-window-calibration.md");
     fs::write(&md_path, &md).expect("write 04-growth-rate-window-calibration.md");
     println!("GW_SCAN_RECOMMENDED={recommended} MAX_SEP={max_sep:.3} INTERVAL={interval:?}");
     println!("GW_SCAN_MD={}", md_path.display());
@@ -607,7 +662,11 @@ fn load_real_set(path: &Path) -> RealSet {
                 .collect()
         })
         .unwrap_or_default();
-    RealSet { id, target_angle, measurements }
+    RealSet {
+        id,
+        target_angle,
+        measurements,
+    }
 }
 
 fn angular_delta(a: f64, b: f64) -> f64 {
@@ -654,28 +713,26 @@ async fn run_real_measure_set_calibration() {
         let mut engine = UdasEngine::new(&NoopRestorer, 10000, 100);
         let res = engine.run_with_measurements(measurements, None).await;
 
-        let (collapse_angle, confidence, final_cr, rounds, method, transitioned) =
-            match &res {
-                Ok(r) => (
-                    r.output.angle.degrees,
-                    r.output.confidence,
-                    r.final_cr,
-                    r.rounds,
-                    format!("{:?}", r.output.collapse_method),
-                    r.transitioned,
-                ),
-                Err(e) => {
-                    eprintln!("set {} error: {e}", set.id);
-                    (-1.0, f64::NAN, f64::NAN, 0usize, "error".into(), false)
-                }
-            };
+        let (collapse_angle, confidence, final_cr, rounds, method, transitioned) = match &res {
+            Ok(r) => (
+                r.output.angle.degrees,
+                r.output.confidence,
+                r.final_cr,
+                r.rounds,
+                format!("{:?}", r.output.collapse_method),
+                r.transitioned,
+            ),
+            Err(e) => {
+                eprintln!("set {} error: {e}", set.id);
+                (-1.0, f64::NAN, f64::NAN, 0usize, "error".into(), false)
+            }
+        };
 
         let delta = angular_delta(collapse_angle, set.target_angle);
         let passed = delta <= REAL_TOLERANCE_DEG;
         println!(
             "REAL_SET {} target={:.0}° collapse={collapse_angle:.1}° delta={delta:.1}° passed={passed} conf={confidence:.3} cr={final_cr:.3} rounds={rounds} method={method} trans={transitioned}",
-            set.id,
-            set.target_angle,
+            set.id, set.target_angle,
         );
 
         all_rows.push(serde_json::json!({
@@ -727,11 +784,7 @@ struct NoopRestorer;
 
 #[async_trait]
 impl LlmRestorer for NoopRestorer {
-    async fn decompose(
-        &self,
-        _problem: &str,
-        _angle: &Angle,
-    ) -> anyhow::Result<Vec<String>> {
+    async fn decompose(&self, _problem: &str, _angle: &Angle) -> anyhow::Result<Vec<String>> {
         Ok(Vec::new())
     }
 
@@ -830,7 +883,11 @@ fn load_jarvis_case(base_dir: &Path, stem: &str, augmented: bool) -> Option<Jarv
         node_id,
         label_angle: label,
         compute_input,
-        source: if augmented { "augmented".into() } else { "base".into() },
+        source: if augmented {
+            "augmented".into()
+        } else {
+            "base".into()
+        },
     })
 }
 
@@ -849,7 +906,9 @@ async fn run_jarvis_case(
         let _ = e;
     }
 
-    let res = engine.run_with_measurements(case.compute_input.clone(), None).await;
+    let res = engine
+        .run_with_measurements(case.compute_input.clone(), None)
+        .await;
     let (collapse_angle, confidence, final_cr, rounds, method) = match &res {
         Ok(r) => (
             r.output.angle.degrees,
@@ -868,9 +927,7 @@ async fn run_jarvis_case(
     let passed = delta <= JARVIS_TOLERANCE_DEG;
     println!(
         "JARVIS {}[{}] label={:.0}° collapse={collapse_angle:.1}° delta={delta:.1}° passed={passed} cr={final_cr:.3} rounds={rounds} method={method}",
-        case.node_id,
-        case.source,
-        case.label_angle,
+        case.node_id, case.source, case.label_angle,
     );
     serde_json::json!({
         "node_id": case.node_id,
@@ -892,7 +949,10 @@ async fn run_jarvis_case(
 async fn run_jarvis_real_vector_calibration() {
     let manifest_dir = Path::new(env!("CARGO_MANIFEST_DIR"));
     let crate_root = manifest_dir.parent().unwrap().parent().unwrap();
-    let fixture_dir = crate_root.join("calibration").join("real-measure-sets").join("jarvis");
+    let fixture_dir = crate_root
+        .join("calibration")
+        .join("real-measure-sets")
+        .join("jarvis");
     let out_dir = crate_root.join("calibration").join("runs").join("real");
     fs::create_dir_all(&out_dir).expect("create real-out dir");
 
@@ -986,7 +1046,11 @@ async fn run_breaker_event_capture() {
         .expect("init anchoring-events.jsonl");
     }
 
-    let questions = load_questions(&crate_root.join("calibration").join("known-answer-set.jsonl"));
+    let questions = load_questions(
+        &crate_root
+            .join("calibration")
+            .join("known-answer-set.jsonl"),
+    );
     let embedder = Arc::new(RuntimeEmbedder::auto());
     println!("BREAKER_EMBEDDER_BACKEND={}", embedder.backend_name());
 
@@ -994,7 +1058,10 @@ async fn run_breaker_event_capture() {
         .iter()
         .filter(|q| q.category == "diverge")
         .collect();
-    assert!(!diverge.is_empty(), "need diverge questions to trip the breaker");
+    assert!(
+        !diverge.is_empty(),
+        "need diverge questions to trip the breaker"
+    );
 
     let mut tripped = 0usize;
     let mut written = 0usize;
@@ -1015,7 +1082,9 @@ async fn run_breaker_event_capture() {
             if ev.question_id.is_none() {
                 ev.question_id = Some(q.id.clone());
             }
-            let path = ev.write_to_disk(&calibration_dir).expect("write breaker event");
+            let path = ev
+                .write_to_disk(&calibration_dir)
+                .expect("write breaker event");
             written += 1;
             println!("BREAKER_EVENT {} -> {}", q.id, path.display());
         }
@@ -1045,7 +1114,16 @@ async fn run_breaker_event_capture() {
         .expect("read breakers dir")
         .filter_map(|e| e.ok())
         .count();
-    assert!(written >= 1, "expected at least one breaker event written to disk");
-    assert!(file_count >= 1, "breakers dir must contain >=1 event file on disk");
-    assert!(anchoring_path.exists(), "anchoring-events.jsonl must exist on disk");
+    assert!(
+        written >= 1,
+        "expected at least one breaker event written to disk"
+    );
+    assert!(
+        file_count >= 1,
+        "breakers dir must contain >=1 event file on disk"
+    );
+    assert!(
+        anchoring_path.exists(),
+        "anchoring-events.jsonl must exist on disk"
+    );
 }

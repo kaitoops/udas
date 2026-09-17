@@ -208,7 +208,10 @@ mod tests {
         let mut br = CircuitBreaker::new();
         assert_eq!(br.evaluate(1.5, &GrowthPath::Stagnation), TripStatus::Idle);
         assert_eq!(br.evaluate(1.5, &GrowthPath::Stagnation), TripStatus::Idle);
-        assert_eq!(br.evaluate(1.5, &GrowthPath::Stagnation), TripStatus::Tripped);
+        assert_eq!(
+            br.evaluate(1.5, &GrowthPath::Stagnation),
+            TripStatus::Tripped
+        );
         assert!(br.is_tripped());
     }
 
@@ -244,7 +247,10 @@ mod tests {
         let mut br = CircuitBreaker::new();
         br.evaluate(1.5, &GrowthPath::Stagnation);
         br.evaluate(1.5, &GrowthPath::Stagnation);
-        assert_eq!(br.evaluate(1.5, &GrowthPath::Stagnation), TripStatus::Tripped);
+        assert_eq!(
+            br.evaluate(1.5, &GrowthPath::Stagnation),
+            TripStatus::Tripped
+        );
         assert_eq!(br.release(), TripStatus::Recovered);
         assert!(!br.is_tripped(), "after release must not be tripped");
         let s = br.evaluate(1.5, &GrowthPath::NormalSearch);

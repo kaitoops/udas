@@ -109,11 +109,7 @@ pub struct Request {
 
 impl Request {
     /// Create a new request with the given method and params.
-    pub fn new(
-        id: impl Into<RequestId>,
-        method: &str,
-        params: Option<serde_json::Value>,
-    ) -> Self {
+    pub fn new(id: impl Into<RequestId>, method: &str, params: Option<serde_json::Value>) -> Self {
         Self {
             jsonrpc: JSONRPC_VERSION.to_string(),
             id: id.into(),

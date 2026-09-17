@@ -72,11 +72,11 @@ mod task_manager;
 mod test_support;
 mod tools;
 mod tui;
+mod udas_bridge;
 mod utils;
 mod vision;
 mod working_set;
 mod workspace_trust;
-mod udas_bridge;
 
 use crate::config::{Config, DEFAULT_TEXT_MODEL, MAX_SUBAGENTS};
 use crate::eval::{EvalHarness, EvalHarnessConfig, ScenarioStepKind};
@@ -1031,11 +1031,17 @@ fn run_agent_display(agent_id: &str) -> Result<()> {
     {
         // Enable VT processing via the registry (persists across sessions).
         let _ = std::process::Command::new("cmd")
-            .args(["/C", "reg", "add",
+            .args([
+                "/C",
+                "reg",
+                "add",
                 "HKCU\\Console",
-                "/v", "VirtualTerminalLevel",
-                "/t", "REG_DWORD",
-                "/d", "1",
+                "/v",
+                "VirtualTerminalLevel",
+                "/t",
+                "REG_DWORD",
+                "/d",
+                "1",
                 "/f",
             ])
             .output();
@@ -1050,7 +1056,9 @@ fn run_agent_display(agent_id: &str) -> Result<()> {
     if !output_path.exists() {
         eprintln!("Agent display file not found: {}", output_path.display());
         eprintln!("The agent may not have started yet, or the agent ID is incorrect.");
-        eprintln!("Check running agents with `deepseek-tui` and look for agent IDs in the sidebar.");
+        eprintln!(
+            "Check running agents with `deepseek-tui` and look for agent IDs in the sidebar."
+        );
         std::process::exit(1);
     }
 
@@ -1077,9 +1085,7 @@ fn run_agent_display(agent_id: &str) -> Result<()> {
             let new_part = if last_size == 0 {
                 // First read: show everything
                 if !displayed_header {
-                    println!(
-                        "\x1b[1m\x1b[36m═══ Agent Display: {agent_id} ═══\x1b[0m\n"
-                    );
+                    println!("\x1b[1m\x1b[36m═══ Agent Display: {agent_id} ═══\x1b[0m\n");
                     displayed_header = true;
                 }
                 &content[..]
@@ -1104,14 +1110,14 @@ fn run_agent_display(agent_id: &str) -> Result<()> {
         // Check if agent is done
         if done_path.exists() {
             let done_content = std::fs::read_to_string(&done_path).unwrap_or_default();
-            println!(
-                "\n\x1b[1m\x1b[32m═══ Agent {agent_id} {done_content} ═══\x1b[0m"
-            );
+            println!("\n\x1b[1m\x1b[32m═══ Agent {agent_id} {done_content} ═══\x1b[0m");
 
             // Auto-close countdown: 30 minutes, updated every 60 seconds.
             // Ctrl+C terminates the window at any time (default OS behavior).
             let countdown_minutes: u64 = 30;
-            println!("\x1b[2m(Auto-close in {countdown_minutes}:00. Press Ctrl+C to close now.)\x1b[0m");
+            println!(
+                "\x1b[2m(Auto-close in {countdown_minutes}:00. Press Ctrl+C to close now.)\x1b[0m"
+            );
 
             let mut remaining_min = countdown_minutes;
             while remaining_min > 0 {
@@ -1817,11 +1823,7 @@ async fn run_doctor(config: &Config, workspace: &Path, config_path_override: Opt
         dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".udas"));
     let config_path = config_path_override
         .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var("UDAS_CONFIG_PATH")
-                .ok()
-                .map(PathBuf::from)
-        })
+        .or_else(|| std::env::var("UDAS_CONFIG_PATH").ok().map(PathBuf::from))
         .unwrap_or_else(|| default_config_dir.join("config.toml"));
 
     if config_path.exists() {
@@ -2593,11 +2595,7 @@ fn run_doctor_json(
         dirs::home_dir().map_or_else(|| PathBuf::from(".deepseek"), |h| h.join(".udas"));
     let config_path = config_path_override
         .map(PathBuf::from)
-        .or_else(|| {
-            std::env::var("UDAS_CONFIG_PATH")
-                .ok()
-                .map(PathBuf::from)
-        })
+        .or_else(|| std::env::var("UDAS_CONFIG_PATH").ok().map(PathBuf::from))
         .unwrap_or_else(|| default_config_dir.join("config.toml"));
 
     let api_key_state = match resolve_api_key_source(config) {
@@ -6612,8 +6610,8 @@ async fn run_udas(config: &Config, args: UdasArgs) -> Result<()> {
     }
 
     // Create and run the full search→collapse engine
-    let mut engine = UdasEngine::new(&client, total_budget, cost_per_restore)
-        .with_max_rounds(max_rounds);
+    let mut engine =
+        UdasEngine::new(&client, total_budget, cost_per_restore).with_max_rounds(max_rounds);
 
     match engine.run(&problem).await {
         Ok(result) => {
@@ -6630,7 +6628,10 @@ async fn run_udas(config: &Config, args: UdasArgs) -> Result<()> {
                 println!("\n── Collapse Result ──");
                 println!("Collapsed angle:      {:.1}°", result.output.angle.degrees);
                 println!("Confidence:           {:.3}", result.output.confidence);
-                println!("Search efficiency:    {:.3}", result.output.search_efficiency);
+                println!(
+                    "Search efficiency:    {:.3}",
+                    result.output.search_efficiency
+                );
                 println!("Collapse method:      {:?}", result.output.collapse_method);
 
                 println!("\n── Evidence Ledgers ({}) ──", result.output.ledgers.len());
@@ -6778,7 +6779,9 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
         println!();
         println!("── Environmental Signals ({}) ──", signals.len());
         for (i, s) in signals.iter().enumerate() {
-            let ctx = s.to_semantic_context().unwrap_or_else(|| "(no mapping)".into());
+            let ctx = s
+                .to_semantic_context()
+                .unwrap_or_else(|| "(no mapping)".into());
             println!("  [{}] {:?} → {}", i + 1, s.signal_type, ctx);
         }
         println!();
@@ -6816,7 +6819,12 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
         let angle = angles[i];
 
         if !args.json {
-            println!("  [{}/{}] Restoring at {:.0}°...", i + 1, variations.len(), angle.degrees);
+            println!(
+                "  [{}/{}] Restoring at {:.0}°...",
+                i + 1,
+                variations.len(),
+                angle.degrees
+            );
         }
 
         // Perform restoration R(θ) with the basis variation text
@@ -6858,10 +6866,13 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
         println!("Running interference field analysis + collision collapse...");
     }
 
-    let mut engine = UdasEngine::new(&client, total_budget, cost_per_restore)
-        .with_max_rounds(max_rounds);
+    let mut engine =
+        UdasEngine::new(&client, total_budget, cost_per_restore).with_max_rounds(max_rounds);
 
-    match engine.run_with_measurements(measurements, Some(&problem)).await {
+    match engine
+        .run_with_measurements(measurements, Some(&problem))
+        .await
+    {
         Ok(result) => {
             if args.json {
                 println!("{}", serde_json::to_string_pretty(&result.output)?);
@@ -6872,7 +6883,10 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
                 println!("Rounds executed:          {}", result.rounds);
                 println!("Transitioned to GD:       {}", result.transitioned);
                 println!("Final contrast ratio:     {:.3}", result.final_cr);
-                println!("Peak angle:               {:.1}°", result.peak_angle.degrees);
+                println!(
+                    "Peak angle:               {:.1}°",
+                    result.peak_angle.degrees
+                );
                 println!("FWHM:                     {:.1}°", result.fwhm);
 
                 // ─── Contradiction Resolution Metrics ──────────────────
@@ -6890,10 +6904,7 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
                         "Peak before:                 {:.1}°",
                         cr.peak_before.degrees
                     );
-                    println!(
-                        "Peak after:                  {:.1}°",
-                        cr.peak_after.degrees
-                    );
+                    println!("Peak after:                  {:.1}°", cr.peak_after.degrees);
                     println!("Shift:                       {:+.1}°", cr.shift_degrees);
                     println!(
                         "Peak shifted:                {}",
@@ -6907,24 +6918,15 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
                 }
 
                 println!("\n── Collapse Result ──");
-                println!(
-                    "Collapsed angle:      {:.1}°",
-                    result.output.angle.degrees
-                );
+                println!("Collapsed angle:      {:.1}°", result.output.angle.degrees);
                 println!("Confidence:           {:.3}", result.output.confidence);
                 println!(
                     "Search efficiency:    {:.3}",
                     result.output.search_efficiency
                 );
-                println!(
-                    "Collapse method:      {:?}",
-                    result.output.collapse_method
-                );
+                println!("Collapse method:      {:?}", result.output.collapse_method);
 
-                println!(
-                    "\n── Evidence Ledgers ({}) ──",
-                    result.output.ledgers.len()
-                );
+                println!("\n── Evidence Ledgers ({}) ──", result.output.ledgers.len());
                 for (i, ledger) in result.output.ledgers.iter().enumerate() {
                     println!(
                         "  [{}] angle={:.1}° quadrant={:<12} score={:.3} items={}",

@@ -126,8 +126,7 @@ impl InterferenceField {
 
     /// Check if all measurements have phases set (complex mode ready).
     pub fn has_phases(&self) -> bool {
-        !self.measurements.is_empty()
-            && self.measurements.iter().all(|m| m.phase.is_some())
+        !self.measurements.is_empty() && self.measurements.iter().all(|m| m.phase.is_some())
     }
 
     /// Silverman rule-of-thumb bandwidth update (same as density.rs).
@@ -173,8 +172,18 @@ fn cosine_sim(a: &[f64], b: &[f64]) -> f64 {
         return 0.0;
     }
     let dot: f64 = a.iter().zip(b).map(|(x, y)| x * y).sum();
-    let norm_a: f64 = a.iter().map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
-    let norm_b: f64 = b.iter().map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
+    let norm_a: f64 = a
+        .iter()
+        .map(|v| v * v)
+        .sum::<f64>()
+        .sqrt()
+        .max(f64::EPSILON);
+    let norm_b: f64 = b
+        .iter()
+        .map(|v| v * v)
+        .sum::<f64>()
+        .sqrt()
+        .max(f64::EPSILON);
     dot / (norm_a * norm_b)
 }
 
@@ -303,8 +312,6 @@ pub fn evaluate_cross_term(field: &InterferenceField, theta: &Angle) -> f64 {
     cross
 }
 
-
-
 // ─── Complex Interference Evaluation ────────────────────────────────────
 //
 // The complex framework evaluates the interference pattern as a complex
@@ -407,8 +414,7 @@ pub fn detect_imaginary_probability(
     let psi = evaluate_complex_amplitude(field, peak);
     let im_mag = psi.im.abs();
     let total_mag = psi.norm();
-    let should_supplement = total_mag > f64::EPSILON
-        && im_mag / total_mag > threshold;
+    let should_supplement = total_mag > f64::EPSILON && im_mag / total_mag > threshold;
     (im_mag, total_mag, should_supplement)
 }
 
@@ -416,10 +422,7 @@ pub fn detect_imaginary_probability(
 ///
 /// Returns the angle with maximum |Im(ψ(θ))| and its value.
 /// Useful for identifying where phase structure is most unresolved.
-pub fn max_imaginary_angle(
-    field: &InterferenceField,
-    resolution: usize,
-) -> (Angle, f64) {
+pub fn max_imaginary_angle(field: &InterferenceField, resolution: usize) -> (Angle, f64) {
     (0..resolution)
         .map(|i| {
             let deg = i as f64 * 360.0 / resolution as f64;
@@ -539,11 +542,7 @@ pub fn pattern_gradient_magnitude(field: &InterferenceField, angle: &Angle) -> f
 /// θ_{t+1} = θ_t + α · dI/dθ|_{θ_t}
 ///
 /// Ascends toward the pattern peak (maximum interference structure).
-pub fn gradient_descent_step(
-    field: &InterferenceField,
-    current: &Angle,
-    step_size: f64,
-) -> Angle {
+pub fn gradient_descent_step(field: &InterferenceField, current: &Angle, step_size: f64) -> Angle {
     let grad = pattern_gradient(field, current);
     Angle::from_degrees(current.degrees + step_size * grad)
 }
@@ -627,7 +626,12 @@ pub fn pattern_weighted_sample(
 ///
 /// Scans outward from the peak until I(θ) drops below half-max.
 /// Returns angular width in degrees, clamped to [10°, 180°].
-pub fn compute_fwhm(field: &InterferenceField, peak: &Angle, min_fwhm: f64, default_fwhm: f64) -> f64 {
+pub fn compute_fwhm(
+    field: &InterferenceField,
+    peak: &Angle,
+    min_fwhm: f64,
+    default_fwhm: f64,
+) -> f64 {
     let peak_val = evaluate_pattern(field, peak);
     let half_max = peak_val / 2.0;
 
@@ -673,10 +677,7 @@ pub fn compute_fwhm(field: &InterferenceField, peak: &Angle, min_fwhm: f64, defa
 /// disagree. The resolution layer (Phase 3) should deep-dive here.
 ///
 /// Returns a list of (angle, negativity) pairs, sorted by most negative first.
-pub fn find_destructive_points(
-    field: &InterferenceField,
-    resolution: usize,
-) -> Vec<(Angle, f64)> {
+pub fn find_destructive_points(field: &InterferenceField, resolution: usize) -> Vec<(Angle, f64)> {
     let mut points: Vec<(Angle, f64)> = (0..resolution)
         .map(|i| {
             let deg = i as f64 * 360.0 / resolution as f64;
@@ -711,7 +712,6 @@ pub fn resolution_direction(
     let signed_shift = if raw <= 180.0 { shift } else { -shift };
     (new_peak, signed_shift)
 }
-
 
 // ─── Slerp Collapse (P1: Primary Contradiction) ────────────────────────
 //
@@ -846,8 +846,13 @@ pub fn compute_vmf_kappa(field: &InterferenceField, peak: &Angle) -> f64 {
     // Compute mean resultant length R_bar from result embeddings
     let mut sum_vec = vec![0.0; dim];
     for m in &field.measurements {
-        let norm: f64 = m.result_embedding.iter()
-            .map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
+        let norm: f64 = m
+            .result_embedding
+            .iter()
+            .map(|v| v * v)
+            .sum::<f64>()
+            .sqrt()
+            .max(f64::EPSILON);
         for (i, &v) in m.result_embedding.iter().enumerate() {
             sum_vec[i] += v / norm;
         }
@@ -866,8 +871,8 @@ pub fn compute_vmf_kappa(field: &InterferenceField, peak: &Angle) -> f64 {
         .collect();
 
     let mean = local_values.iter().sum::<f64>() / local_values.len() as f64;
-    let variance = local_values.iter()
-        .map(|v| (v - mean).powi(2)).sum::<f64>() / local_values.len() as f64;
+    let variance =
+        local_values.iter().map(|v| (v - mean).powi(2)).sum::<f64>() / local_values.len() as f64;
     let sigma = variance.sqrt().max(f64::EPSILON);
 
     // kappa = R_bar / (n * sigma)
@@ -913,7 +918,11 @@ pub fn find_contrast_prototype(field: &InterferenceField) -> Option<(Embedding, 
             let alpha_ij = (mi.confidence * mj.confidence).sqrt();
             let cos_phase = cosine_sim(&mi.basis_embedding, &mj.basis_embedding);
             let result_sim = cosine_sim(&mi.result_embedding, &mj.result_embedding);
-            let consistency_gate = if result_sim > field.consistency_threshold { 1.0 } else { -1.0 };
+            let consistency_gate = if result_sim > field.consistency_threshold {
+                1.0
+            } else {
+                -1.0
+            };
 
             // Cross-term magnitude = interference strength
             let cross_magnitude = (2.0 * alpha_ij * cos_phase * consistency_gate).abs();
@@ -937,10 +946,17 @@ pub fn find_contrast_prototype(field: &InterferenceField) -> Option<(Embedding, 
     }
 
     let mut diff: Vec<f64> = (0..dim)
-        .map(|k| field.measurements[i].result_embedding[k] - field.measurements[j].result_embedding[k])
+        .map(|k| {
+            field.measurements[i].result_embedding[k] - field.measurements[j].result_embedding[k]
+        })
         .collect();
 
-    let norm: f64 = diff.iter().map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
+    let norm: f64 = diff
+        .iter()
+        .map(|v| v * v)
+        .sum::<f64>()
+        .sqrt()
+        .max(f64::EPSILON);
     for v in &mut diff {
         *v /= norm;
     }
@@ -956,7 +972,12 @@ mod tests {
 
     /// Helper: create a simple embedding vector.
     fn emb(vals: &[f64]) -> Embedding {
-        let norm: f64 = vals.iter().map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
+        let norm: f64 = vals
+            .iter()
+            .map(|v| v * v)
+            .sum::<f64>()
+            .sqrt()
+            .max(f64::EPSILON);
         vals.iter().map(|v| v / norm).collect()
     }
 
@@ -1039,20 +1060,23 @@ mod tests {
         field.add_measurement(
             Angle::from_degrees(90.0),
             0.8,
-            emb(&[1.0, 0.1]),  // similar basis
-            emb(&[1.0, 0.1]),  // similar result
+            emb(&[1.0, 0.1]), // similar basis
+            emb(&[1.0, 0.1]), // similar result
         );
         field.add_measurement(
             Angle::from_degrees(100.0),
             0.8,
-            emb(&[1.0, 0.1]),  // same basis direction
-            emb(&[1.0, 0.1]),  // same result direction
+            emb(&[1.0, 0.1]), // same basis direction
+            emb(&[1.0, 0.1]), // same result direction
         );
 
         let cross = evaluate_cross_term(&field, &Angle::from_degrees(95.0));
         // cos_sim of identical bases = 1.0, result_sim = 1.0 > τ → gate = +1
         // cross should be positive (constructive)
-        assert!(cross > 0.0, "similar bases should give constructive interference, got {cross}");
+        assert!(
+            cross > 0.0,
+            "similar bases should give constructive interference, got {cross}"
+        );
     }
 
     #[test]
@@ -1064,8 +1088,8 @@ mod tests {
         field.add_measurement(
             Angle::from_degrees(90.0),
             0.8,
-            emb(&[1.0, 0.1]),  // similar basis
-            emb(&[1.0, 0.0]),  // result A
+            emb(&[1.0, 0.1]), // similar basis
+            emb(&[1.0, 0.0]), // result A
         );
         field.add_measurement(
             Angle::from_degrees(100.0),
@@ -1077,7 +1101,10 @@ mod tests {
         let cross = evaluate_cross_term(&field, &Angle::from_degrees(95.0));
         // cos_sim(basis) ≈ 1.0 (positive), but result_sim < 0 < τ → gate = -1
         // cross should be negative (destructive)
-        assert!(cross < 0.0, "similar bases + contradictory results should give destructive interference, got {cross}");
+        assert!(
+            cross < 0.0,
+            "similar bases + contradictory results should give destructive interference, got {cross}"
+        );
     }
 
     #[test]
@@ -1093,12 +1120,15 @@ mod tests {
         field.add_measurement(
             Angle::from_degrees(100.0),
             0.8,
-            emb(&[0.0, 1.0]),  // orthogonal basis
+            emb(&[0.0, 1.0]), // orthogonal basis
             emb(&[1.0, 0.0]),
         );
 
         let cross = evaluate_cross_term(&field, &Angle::from_degrees(95.0));
-        assert!(cross.abs() < 1e-9, "orthogonal bases should have zero cross term, got {cross}");
+        assert!(
+            cross.abs() < 1e-9,
+            "orthogonal bases should have zero cross term, got {cross}"
+        );
     }
 
     #[test]
@@ -1121,7 +1151,10 @@ mod tests {
         }
         let cr = contrast_ratio(&field, 72);
         // With a cluster of similar measurements, CR should be > 1
-        assert!(cr > 1.0, "clustered measurements should give CR > 1, got {cr}");
+        assert!(
+            cr > 1.0,
+            "clustered measurements should give CR > 1, got {cr}"
+        );
     }
 
     #[test]
@@ -1177,7 +1210,10 @@ mod tests {
 
         let destructive = find_destructive_points(&field, 72);
         // Should find at least some destructive points
-        assert!(!destructive.is_empty(), "contradictory measurements should produce destructive points");
+        assert!(
+            !destructive.is_empty(),
+            "contradictory measurements should produce destructive points"
+        );
     }
 
     #[test]
@@ -1266,7 +1302,11 @@ mod tests {
         // Should NOT be within 5° of 180°
         let diff = (sec_angle.degrees - 180.0).abs();
         let circ_diff = diff.min(360.0 - diff);
-        assert!(circ_diff >= 5.0, "secondary peak should be >5° from peak, got {}°", circ_diff);
+        assert!(
+            circ_diff >= 5.0,
+            "secondary peak should be >5° from peak, got {}°",
+            circ_diff
+        );
     }
 
     #[test]
@@ -1346,7 +1386,11 @@ mod tests {
             );
         }
         let kappa = compute_vmf_kappa(&field, &Angle::from_degrees(95.0));
-        assert!(kappa > 0.0, "consistent measurements should give κ > 0, got {}", kappa);
+        assert!(
+            kappa > 0.0,
+            "consistent measurements should give κ > 0, got {}",
+            kappa
+        );
     }
 
     // ── Contrastive Prototype Tests (P3) ───────────────────────────
@@ -1410,7 +1454,11 @@ mod tests {
 
         let (direction, _) = find_contrast_prototype(&field).unwrap();
         let norm: f64 = direction.iter().map(|v| v * v).sum::<f64>().sqrt();
-        assert!((norm - 1.0).abs() < 1e-6, "direction should be normalized, norm = {}", norm);
+        assert!(
+            (norm - 1.0).abs() < 1e-6,
+            "direction should be normalized, norm = {}",
+            norm
+        );
     }
 
     // ── Complex Framework Tests ────────────────────────────────────
@@ -1509,20 +1557,24 @@ mod tests {
             1.0,
             emb(&[1.0, 0.0]),
             emb(&[1.0, 0.0]),
-            Some(0.0),  // phase = 0
+            Some(0.0), // phase = 0
         );
         field.add_measurement_with_phase(
             Angle::from_degrees(90.0),
             1.0,
             emb(&[1.0, 0.0]),
             emb(&[1.0, 0.0]),
-            Some(std::f64::consts::PI),  // phase = π (opposite)
+            Some(std::f64::consts::PI), // phase = π (opposite)
         );
 
         let psi = evaluate_complex_amplitude(&field, &Angle::from_degrees(90.0));
         // α₁ = 1·e^{i·0} = 1, α₂ = 1·e^{iπ} = -1
         // ψ = 1·K(0) + (-1)·K(0) = 0
-        assert!(psi.norm() < 1e-9, "opposite phases should cancel, got |ψ| = {}", psi.norm());
+        assert!(
+            psi.norm() < 1e-9,
+            "opposite phases should cancel, got |ψ| = {}",
+            psi.norm()
+        );
     }
 
     #[test]
@@ -1545,8 +1597,16 @@ mod tests {
 
         let psi = evaluate_complex_amplitude(&field, &Angle::from_degrees(92.5));
         // Both phases = 0, so ψ is real and positive
-        assert!(psi.re > 0.0, "aligned phases should give positive real ψ, got {}", psi.re);
-        assert!(psi.im.abs() < 1e-9, "zero phases should give zero imaginary, got {}", psi.im);
+        assert!(
+            psi.re > 0.0,
+            "aligned phases should give positive real ψ, got {}",
+            psi.re
+        );
+        assert!(
+            psi.im.abs() < 1e-9,
+            "zero phases should give zero imaginary, got {}",
+            psi.im
+        );
     }
 
     #[test]
@@ -1559,9 +1619,8 @@ mod tests {
             emb(&[1.0, 0.0]),
         );
 
-        let (im_mag, total_mag, should_supp) = detect_imaginary_probability(
-            &field, &Angle::from_degrees(90.0), 0.1,
-        );
+        let (im_mag, total_mag, should_supp) =
+            detect_imaginary_probability(&field, &Angle::from_degrees(90.0), 0.1);
         // No phase → ψ is real → Im(ψ) = 0
         assert!(im_mag < 1e-9);
         assert!(!should_supp);
@@ -1584,14 +1643,17 @@ mod tests {
             1.0,
             emb(&[1.0, 0.0]),
             emb(&[1.0, 0.0]),
-            Some(std::f64::consts::FRAC_PI_2),  // 90° phase
+            Some(std::f64::consts::FRAC_PI_2), // 90° phase
         );
 
-        let (im_mag, total_mag, should_supp) = detect_imaginary_probability(
-            &field, &Angle::from_degrees(90.0), 0.1,
-        );
+        let (im_mag, total_mag, should_supp) =
+            detect_imaginary_probability(&field, &Angle::from_degrees(90.0), 0.1);
         // ψ = 1 + i → Im/|ψ| = 1/√2 ≈ 0.707 > 0.1
-        assert!(im_mag > 0.5, "mixed phases should produce significant Im, got {}", im_mag);
+        assert!(
+            im_mag > 0.5,
+            "mixed phases should produce significant Im, got {}",
+            im_mag
+        );
         assert!(should_supp, "should recommend supplementation");
     }
 
@@ -1604,7 +1666,7 @@ mod tests {
                 0.9,
                 emb(&[1.0, 0.1]),
                 emb(&[1.0, 0.1]),
-                Some(0.0),  // aligned phases
+                Some(0.0), // aligned phases
             );
         }
 
@@ -1612,8 +1674,11 @@ mod tests {
         let peak_val = evaluate_complex_probability(&field, &peak);
         let off_val = evaluate_complex_probability(&field, &Angle::from_degrees(270.0));
         assert!(peak_val > off_val, "peak should have higher probability");
-        assert!(peak.degrees >= 80.0 && peak.degrees <= 110.0,
-            "peak should be near 90-100°, got {}", peak.degrees);
+        assert!(
+            peak.degrees >= 80.0 && peak.degrees <= 110.0,
+            "peak should be near 90-100°, got {}",
+            peak.degrees
+        );
     }
 
     #[test]
@@ -1653,8 +1718,11 @@ mod tests {
         let (angle, im_val) = max_imaginary_angle(&field, 72);
         assert!(im_val > 0.5, "should find significant imaginary component");
         // Maximum imaginary should be near 90° where both measurements are
-        assert!(angle.degrees >= 80.0 && angle.degrees <= 100.0,
-            "max imaginary should be near measurements, got {}", angle.degrees);
+        assert!(
+            angle.degrees >= 80.0 && angle.degrees <= 100.0,
+            "max imaginary should be near measurements, got {}",
+            angle.degrees
+        );
     }
 
     #[test]
@@ -1676,14 +1744,19 @@ mod tests {
         assert!(!field.has_phases(), "should start in real mode");
 
         field.set_phases(&[0.0, std::f64::consts::FRAC_PI_2]);
-        assert!(field.has_phases(), "should be in complex mode after set_phases");
+        assert!(
+            field.has_phases(),
+            "should be in complex mode after set_phases"
+        );
 
         // Now evaluate_complex_amplitude should use the phases
         let psi = evaluate_complex_amplitude(&field, &Angle::from_degrees(0.0));
         // Measurement 0: α = 1·e^{i·0}·K(0) = 1
         // Measurement 1: α = 1·e^{iπ/2}·K(90°) ≈ 0 (far away)
         // ψ ≈ 1 + 0i
-        assert!((psi.re - 1.0).abs() < 0.1, "should be mostly real at measurement 0 angle");
+        assert!(
+            (psi.re - 1.0).abs() < 0.1,
+            "should be mostly real at measurement 0 angle"
+        );
     }
-
 }

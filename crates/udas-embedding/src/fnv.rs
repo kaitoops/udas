@@ -128,7 +128,10 @@ mod tests {
     #[tokio::test]
     async fn fnv_embed_is_normalised() {
         let embedder = FnvHashEmbedder;
-        let v = embedder.embed("some longer text for embedding test").await.unwrap();
+        let v = embedder
+            .embed("some longer text for embedding test")
+            .await
+            .unwrap();
         let norm: f64 = v.iter().map(|x| x * x).sum::<f64>().sqrt();
         assert!((norm - 1.0).abs() < 1e-9);
     }

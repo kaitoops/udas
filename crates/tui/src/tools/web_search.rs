@@ -549,7 +549,10 @@ impl WebSearchTool {
     ) -> Result<ToolResult, ToolError> {
         // Try Tavily first if API key is available
         if context.search_api_key.is_some() {
-            if let Ok(result) = self.run_tavily_search(query, max_results, timeout_ms, context).await {
+            if let Ok(result) = self
+                .run_tavily_search(query, max_results, timeout_ms, context)
+                .await
+            {
                 return Ok(result);
             }
         }
@@ -560,7 +563,9 @@ impl WebSearchTool {
             .timeout(Duration::from_millis(timeout_ms))
             .user_agent(USER_AGENT)
             .build()
-            .map_err(|e| ToolError::execution_failed(format!("Failed to build HTTP client: {e}")))?;
+            .map_err(|e| {
+                ToolError::execution_failed(format!("Failed to build HTTP client: {e}"))
+            })?;
 
         let encoded = url_encode(query);
 
@@ -607,7 +612,10 @@ impl WebSearchTool {
 
             let resp = match client
                 .get(&url)
-                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                .header(
+                    "Accept",
+                    "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                )
                 .header("Accept-Language", "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7")
                 .send()
                 .await
@@ -634,7 +642,8 @@ impl WebSearchTool {
                     message: format!("Found {} result(s) via {}", results.len(), name),
                     results,
                 };
-                return ToolResult::json(&response).map_err(|e| ToolError::execution_failed(e.to_string()));
+                return ToolResult::json(&response)
+                    .map_err(|e| ToolError::execution_failed(e.to_string()));
             }
         }
 
@@ -893,26 +902,43 @@ fn root_domain(url: &str) -> Option<String> {
 /// Parse Google search results from HTML
 fn parse_google_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*\bg\b[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*\bg\b[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let title_re = Regex::new(r#"(?is)<a[^>]*href="([^"]+)"[^>]*>.*?<h3[^>]*>(.*?)</h3>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let snippet_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*(?:VwiC3b|IsZvec|lEBKkf)[^"]*"[^>]*>(.*?)</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let snippet_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*(?:VwiC3b|IsZvec|lEBKkf)[^"]*"[^>]*>(.*?)</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() || href.starts_with("/search") { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.google.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() || href.starts_with("/search") {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.google.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -923,22 +949,38 @@ fn parse_yahoo_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
     let result_re = Regex::new(r#"(?is)<li[^>]*class="[^"]*algo[^"]*"[^>]*>(.*?)</li>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*d-ib[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re =
+        Regex::new(r#"(?is)<a[^>]*class="[^"]*d-ib[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*lh-[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") } else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -947,26 +989,45 @@ fn parse_yahoo_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Startpage search results from HTML
 fn parse_startpage_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*w-gl__result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*w-gl__result-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*w-gl__description[^"]*"[^>]*>(.*?)</p>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*w-gl__result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re = Regex::new(
+        r#"(?is)<a[^>]*class="[^"]*w-gl__result-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#,
+    )
+    .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let snippet_re =
+        Regex::new(r#"(?is)<p[^>]*class="[^"]*w-gl__description[^"]*"[^>]*>(.*?)</p>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.startpage.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.startpage.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -975,26 +1036,44 @@ fn parse_startpage_results(html: &str, max_results: usize) -> Vec<WebSearchEntry
 /// Parse Ecosia search results from HTML
 fn parse_ecosia_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*result-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re = Regex::new(
+        r#"(?is)<a[^>]*class="[^"]*result-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#,
+    )
+    .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*result-snippet[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.ecosia.org{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.ecosia.org{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1003,26 +1082,44 @@ fn parse_ecosia_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Qwant search results from HTML
 fn parse_qwant_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*result-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re = Regex::new(
+        r#"(?is)<a[^>]*class="[^"]*result-title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#,
+    )
+    .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*result-snippet[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.qwant.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.qwant.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1031,26 +1128,43 @@ fn parse_qwant_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Mojeek search results from HTML
 fn parse_mojeek_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<li[^>]*class="[^"]*results-standard[^"]*"[^>]*>(.*?)</li>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<li[^>]*class="[^"]*results-standard[^"]*"[^>]*>(.*?)</li>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re =
+        Regex::new(r#"(?is)<a[^>]*class="[^"]*title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*s[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.mojeek.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.mojeek.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1059,26 +1173,42 @@ fn parse_mojeek_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Searx search results from HTML
 fn parse_searx_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<article[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</article>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<article[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</article>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let title_re = Regex::new(r#"(?is)<h3[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*content[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://searx.be{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://searx.be{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1089,24 +1219,40 @@ fn parse_yandex_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
     let result_re = Regex::new(r#"(?is)<li[^>]*class="[^"]*serp-item[^"]*"[^>]*>(.*?)</li>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*Link[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re =
+        Regex::new(r#"(?is)<a[^>]*class="[^"]*Link[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*OrganicText[^"]*"[^>]*>(.*?)</div>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://yandex.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://yandex.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1115,26 +1261,44 @@ fn parse_yandex_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Baidu search results from HTML
 fn parse_baidu_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*id="(\d+)"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re = Regex::new(
+        r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*id="(\d+)"[^>]*>(.*?)</div>\s*</div>"#,
+    )
+    .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*c-title[^"]*"[^>]*href="([^"]+)"[^>]*>.*?<span[^>]*class="[^"]*c-title-text[^"]*"[^>]*>(.*?)</span>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let snippet_re = Regex::new(r#"(?is)<span[^>]*class="[^"]*content-right_[^"]*"[^>]*>(.*?)</span>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let snippet_re =
+        Regex::new(r#"(?is)<span[^>]*class="[^"]*content-right_[^"]*"[^>]*>(.*?)</span>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(2).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.baidu.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.baidu.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1143,26 +1307,42 @@ fn parse_baidu_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Sogou search results from HTML
 fn parse_sogou_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*vrwrap[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*vrwrap[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let title_re = Regex::new(r#"(?is)<h3[^>]*>.*?<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*str_info[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.sogou.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.sogou.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1173,24 +1353,40 @@ fn parse_so_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
     let result_re = Regex::new(r#"(?is)<li[^>]*class="[^"]*res-list[^"]*"[^>]*>(.*?)</li>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re =
+        Regex::new(r#"(?is)<a[^>]*class="[^"]*title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*res-desc[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://www.so.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://www.so.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results
@@ -1199,26 +1395,43 @@ fn parse_so_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
 /// Parse Toutiao (头条搜索) results from HTML
 fn parse_toutiao_results(html: &str, max_results: usize) -> Vec<WebSearchEntry> {
     let mut results = Vec::new();
-    let result_re = Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
-    let title_re = Regex::new(r#"(?is)<a[^>]*class="[^"]*title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
-        .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let result_re =
+        Regex::new(r#"(?is)<div[^>]*class="[^"]*result[^"]*"[^>]*>(.*?)</div>\s*</div>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
+    let title_re =
+        Regex::new(r#"(?is)<a[^>]*class="[^"]*title[^"]*"[^>]*href="([^"]+)"[^>]*>(.*?)</a>"#)
+            .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     let snippet_re = Regex::new(r#"(?is)<p[^>]*class="[^"]*abstract[^"]*"[^>]*>(.*?)</p>"#)
         .unwrap_or_else(|_| Regex::new(r"(?s)placeholder").unwrap());
     for cap in result_re.captures_iter(html) {
-        if results.len() >= max_results { break; }
+        if results.len() >= max_results {
+            break;
+        }
         let block = cap.get(1).map(|m| m.as_str()).unwrap_or("");
         if let Some(title_cap) = title_re.captures(block) {
             let href = title_cap.get(1).map(|m| m.as_str()).unwrap_or("");
             let title_raw = title_cap.get(2).map(|m| m.as_str()).unwrap_or("");
             let title = normalize_text(title_raw);
-            if title.is_empty() { continue; }
-            let url = if href.starts_with("//") { format!("https:{href}") }
-                else if href.starts_with('/') { format!("https://so.toutiao.com{href}") }
-                else { href.to_string() };
-            let snippet = snippet_re.captures(block).and_then(|s| s.get(1))
-                .map(|m| normalize_text(m.as_str())).filter(|s| !s.is_empty());
-            results.push(WebSearchEntry { title, url, snippet });
+            if title.is_empty() {
+                continue;
+            }
+            let url = if href.starts_with("//") {
+                format!("https:{href}")
+            } else if href.starts_with('/') {
+                format!("https://so.toutiao.com{href}")
+            } else {
+                href.to_string()
+            };
+            let snippet = snippet_re
+                .captures(block)
+                .and_then(|s| s.get(1))
+                .map(|m| normalize_text(m.as_str()))
+                .filter(|s| !s.is_empty());
+            results.push(WebSearchEntry {
+                title,
+                url,
+                snippet,
+            });
         }
     }
     results

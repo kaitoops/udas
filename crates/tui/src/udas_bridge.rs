@@ -23,17 +23,25 @@ use crate::models::{ContentBlock, Message, MessageRequest, SystemPrompt};
 use async_trait::async_trait;
 use deepseek_udas::restoration::LlmRestorer;
 use deepseek_udas::types::{Angle, Embedding, EvidenceItem};
-use udas_embedding::{Embedder, FnvHashEmbedder};
 use udas_embed_service::{ClientConfig, RemoteEmbedder};
+use udas_embedding::{Embedder, FnvHashEmbedder};
 
 /// Map an angle quadrant to a human-readable dimension description used
 /// inside LLM prompts.
 fn quadrant_brief(q: u8) -> &'static str {
     match q {
-        0 => "temporal — time-based retrieval: when events happened, chronological order, temporal causality, recency",
-        1 => "semantic — meaning-based retrieval: concepts, themes, definitions, semantic relationships, analogies",
-        2 => "entity — actor-based retrieval: who was involved, organisations, people, named entities, agents",
-        _ => "cross-domain — conflict-based retrieval: contradictions, opposing views, edge cases, anomalies, paradoxes",
+        0 => {
+            "temporal — time-based retrieval: when events happened, chronological order, temporal causality, recency"
+        }
+        1 => {
+            "semantic — meaning-based retrieval: concepts, themes, definitions, semantic relationships, analogies"
+        }
+        2 => {
+            "entity — actor-based retrieval: who was involved, organisations, people, named entities, agents"
+        }
+        _ => {
+            "cross-domain — conflict-based retrieval: contradictions, opposing views, edge cases, anomalies, paradoxes"
+        }
     }
 }
 
@@ -131,7 +139,11 @@ impl LlmRestorer for DeepSeekClient {
             _ => {
                 let fallback: Vec<String> = cleaned
                     .lines()
-                    .map(|l| l.trim().trim_start_matches(|c: char| c.is_numeric() || c == '.' || c == ')' || c == ' '))
+                    .map(|l| {
+                        l.trim().trim_start_matches(|c: char| {
+                            c.is_numeric() || c == '.' || c == ')' || c == ' '
+                        })
+                    })
                     .filter(|l| !l.is_empty())
                     .map(String::from)
                     .collect();
@@ -151,7 +163,7 @@ impl LlmRestorer for DeepSeekClient {
     ) -> anyhow::Result<Vec<EvidenceItem>> {
         let brief = quadrant_brief(angle.quadrant());
         let angle_deg = angle.degrees;
-                let qs = sub_questions
+        let qs = sub_questions
             .iter()
             .map(|q| format!("  - {q}"))
             .collect::<Vec<_>>()
@@ -283,7 +295,6 @@ impl LlmRestorer for DeepSeekClient {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -301,8 +312,14 @@ mod tests {
     #[test]
     fn extract_text_concatenates_text_blocks() {
         let blocks = vec![
-            ContentBlock::Text { text: "hello ".into(), cache_control: None },
-            ContentBlock::Text { text: "world".into(), cache_control: None },
+            ContentBlock::Text {
+                text: "hello ".into(),
+                cache_control: None,
+            },
+            ContentBlock::Text {
+                text: "world".into(),
+                cache_control: None,
+            },
         ];
         assert_eq!(extract_text(&blocks), "hello world");
     }

@@ -2112,13 +2112,12 @@ impl ToolSpec for AgentSpawnTool {
         // HARNESS constraint injection: when harness_role is set, prepend the
         // appropriate constraint system prompt fragment.
         let effective_prompt = if let Some(ref role_str) = spawn_request.harness_role
-            && let Some(fragment) = crate::harness::harness_system_prompt_fragment(
-                match role_str.as_str() {
+            && let Some(fragment) =
+                crate::harness::harness_system_prompt_fragment(match role_str.as_str() {
                     "planner" => crate::harness::AgentRole::Planner,
                     "evaluator" => crate::harness::AgentRole::Evaluator,
                     _ => crate::harness::AgentRole::Generator,
-                })
-        {
+                }) {
             format!("{fragment}\n─── task ───\n{effective_prompt}")
         } else {
             effective_prompt
@@ -2189,7 +2188,8 @@ impl ToolSpec for AgentSpawnTool {
                 "summary": summary,
                 "stdout": stdout,
                 "exit_code": exit_code,
-            })).map_err(|e| ToolError::execution_failed(e.to_string()));
+            }))
+            .map_err(|e| ToolError::execution_failed(e.to_string()));
         }
 
         let mut manager = self.manager.write().await;
@@ -3609,7 +3609,8 @@ async fn run_subagent(
         let mut stream_model = runtime.model.clone();
         let mut stream_usage = crate::models::Usage::default();
         let mut tool_use_states: Vec<ToolUseStreamState> = Vec::new();
-        let mut current_tool_indices: std::collections::HashMap<u32, usize> = std::collections::HashMap::new();
+        let mut current_tool_indices: std::collections::HashMap<u32, usize> =
+            std::collections::HashMap::new();
         let mut current_block_kind: Option<ContentBlockKind> = None;
 
         // Open the stream
@@ -3638,7 +3639,12 @@ async fn run_subagent(
                 return Ok(SubAgentResult {
                     name: agent_id.clone(),
                     agent_id: agent_id.clone(),
-                    context_mode: if fork_context_enabled { "forked" } else { "fresh" }.to_string(),
+                    context_mode: if fork_context_enabled {
+                        "forked"
+                    } else {
+                        "fresh"
+                    }
+                    .to_string(),
                     fork_context: fork_context_enabled,
                     agent_type: agent_type.clone(),
                     assignment: assignment.clone(),
@@ -3668,66 +3674,70 @@ async fn run_subagent(
                 StreamEvent::MessageStart { message } => {
                     stream_model = message.model.clone();
                 }
-                StreamEvent::ContentBlockStart { index, content_block } => {
-                    match content_block {
-                        ContentBlockStart::Text { text } => {
-                            current_block_kind = Some(ContentBlockKind::Text);
-                            stream_text.push_str(&text);
-                            if let Some(ref r) = relay {
-                                r.write_text_delta(&text);
-                            }
-                        }
-                        ContentBlockStart::Thinking { thinking } => {
-                            current_block_kind = Some(ContentBlockKind::Thinking);
-                            stream_thinking.push_str(&thinking);
-                            if let Some(ref r) = relay {
-                                r.write_thinking_delta(&thinking);
-                            }
-                        }
-                        ContentBlockStart::ToolUse { id, name, input, .. } => {
-                            current_block_kind = Some(ContentBlockKind::ToolUse);
-                            let tool_idx = tool_use_states.len();
-                            tool_use_states.push(ToolUseStreamState {
-                                id: id.clone(),
-                                name: name.clone(),
-                                input_buffer: String::new(),
-                                initial_input: input.clone(),
-                            });
-                            current_tool_indices.insert(index, tool_idx);
-                            if let Some(ref r) = relay {
-                                r.write_tool_call(&name, steps);
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                StreamEvent::ContentBlockDelta { index, delta } => {
-                    match delta {
-                        Delta::TextDelta { text } => {
-                            stream_text.push_str(&text);
-                            if let Some(ref r) = relay {
-                                r.write_text_delta(&text);
-                            }
-                        }
-                        Delta::ThinkingDelta { thinking } => {
-                            stream_thinking.push_str(&thinking);
-                            if let Some(ref r) = relay {
-                                r.write_thinking_delta(&thinking);
-                            }
-                        }
-                        Delta::InputJsonDelta { partial_json } => {
-                            if let Some(&tool_idx) = current_tool_indices.get(&index) {
-                                tool_use_states[tool_idx].input_buffer.push_str(&partial_json);
-                            }
+                StreamEvent::ContentBlockStart {
+                    index,
+                    content_block,
+                } => match content_block {
+                    ContentBlockStart::Text { text } => {
+                        current_block_kind = Some(ContentBlockKind::Text);
+                        stream_text.push_str(&text);
+                        if let Some(ref r) = relay {
+                            r.write_text_delta(&text);
                         }
                     }
-                }
+                    ContentBlockStart::Thinking { thinking } => {
+                        current_block_kind = Some(ContentBlockKind::Thinking);
+                        stream_thinking.push_str(&thinking);
+                        if let Some(ref r) = relay {
+                            r.write_thinking_delta(&thinking);
+                        }
+                    }
+                    ContentBlockStart::ToolUse {
+                        id, name, input, ..
+                    } => {
+                        current_block_kind = Some(ContentBlockKind::ToolUse);
+                        let tool_idx = tool_use_states.len();
+                        tool_use_states.push(ToolUseStreamState {
+                            id: id.clone(),
+                            name: name.clone(),
+                            input_buffer: String::new(),
+                            initial_input: input.clone(),
+                        });
+                        current_tool_indices.insert(index, tool_idx);
+                        if let Some(ref r) = relay {
+                            r.write_tool_call(&name, steps);
+                        }
+                    }
+                    _ => {}
+                },
+                StreamEvent::ContentBlockDelta { index, delta } => match delta {
+                    Delta::TextDelta { text } => {
+                        stream_text.push_str(&text);
+                        if let Some(ref r) = relay {
+                            r.write_text_delta(&text);
+                        }
+                    }
+                    Delta::ThinkingDelta { thinking } => {
+                        stream_thinking.push_str(&thinking);
+                        if let Some(ref r) = relay {
+                            r.write_thinking_delta(&thinking);
+                        }
+                    }
+                    Delta::InputJsonDelta { partial_json } => {
+                        if let Some(&tool_idx) = current_tool_indices.get(&index) {
+                            tool_use_states[tool_idx]
+                                .input_buffer
+                                .push_str(&partial_json);
+                        }
+                    }
+                },
                 StreamEvent::ContentBlockStop { index } => {
                     // Finalize the content block
                     if let Some(&tool_idx) = current_tool_indices.get(&index) {
                         let ts = &tool_use_states[tool_idx];
                         let input = if !ts.input_buffer.is_empty() {
-                            serde_json::from_str(&ts.input_buffer).unwrap_or_else(|_| ts.initial_input.clone())
+                            serde_json::from_str(&ts.input_buffer)
+                                .unwrap_or_else(|_| ts.initial_input.clone())
                         } else {
                             ts.initial_input.clone()
                         };
@@ -3807,9 +3817,7 @@ async fn run_subagent(
                     }
                     final_result = Some(text.clone());
                 }
-                ContentBlock::Thinking { thinking }
-                    if !thinking.trim().is_empty() =>
-                {
+                ContentBlock::Thinking { thinking } if !thinking.trim().is_empty() => {
                     if let Some(ref r) = relay {
                         r.write_thinking(thinking);
                     }

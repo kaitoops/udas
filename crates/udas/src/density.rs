@@ -50,13 +50,18 @@ impl DensityField {
 
     /// Add a kernel point and update bandwidth.
     pub fn add_kernel(&mut self, angle: Angle, confidence_weight: f64) {
-        self.kernels.push(KernelPoint { angle, weight: confidence_weight });
+        self.kernels.push(KernelPoint {
+            angle,
+            weight: confidence_weight,
+        });
         self.update_bandwidth();
     }
 
     /// Silverman rule-of-thumb bandwidth update.
     fn update_bandwidth(&mut self) {
-        if self.kernels.len() < 2 { return; }
+        if self.kernels.len() < 2 {
+            return;
+        }
         let angles: Vec<f64> = self.kernels.iter().map(|k| k.angle.degrees).collect();
         let n = angles.len() as f64;
         let mean = angles.iter().sum::<f64>() / n;
@@ -70,13 +75,17 @@ impl DensityField {
 /// Evaluate ρ(θ) at a given angle using Gaussian kernel.
 pub fn evaluate_density(field: &DensityField, theta: &Angle) -> f64 {
     let h = field.bandwidth;
-    field.kernels.iter().map(|k| {
-        let diff = (theta.degrees - k.angle.degrees).abs();
-        // Circular wrap: distance on circle
-        let circular_diff = diff.min(360.0 - diff);
-        // Gaussian kernel: K(x, h) = exp(-x²/(2h²))
-        k.weight * (-0.5 * (circular_diff / h).powi(2)).exp()
-    }).sum()
+    field
+        .kernels
+        .iter()
+        .map(|k| {
+            let diff = (theta.degrees - k.angle.degrees).abs();
+            // Circular wrap: distance on circle
+            let circular_diff = diff.min(360.0 - diff);
+            // Gaussian kernel: K(x, h) = exp(-x²/(2h²))
+            k.weight * (-0.5 * (circular_diff / h).powi(2)).exp()
+        })
+        .sum()
 }
 
 /// Compute density contrast ratio: CR = ρ_max / (ρ_median + ε).
@@ -113,7 +122,9 @@ pub fn transit_threshold(field: &DensityField) -> f64 {
 /// Check if transition condition is met: CR > τ_transit(N) → switch from
 /// angle bisection (Phase 2) to gradient descent (Phase 4).
 pub fn should_transition(field: &DensityField, resolution: usize) -> bool {
-    if field.kernels.len() < field.n_min { return false; }
+    if field.kernels.len() < field.n_min {
+        return false;
+    }
     let cr = contrast_ratio(field, resolution);
     let tau = transit_threshold(field);
     cr > tau
@@ -123,11 +134,7 @@ pub fn should_transition(field: &DensityField, resolution: usize) -> bool {
 ///
 /// θ_{t+1} = θ_t + α · dρ/dθ|_{θ_t}
 /// where α is the adaptive step size from precision_control.
-pub fn gradient_descent_step(
-    field: &DensityField,
-    current: &Angle,
-    step_size: f64,
-) -> Angle {
+pub fn gradient_descent_step(field: &DensityField, current: &Angle, step_size: f64) -> Angle {
     let h = 1e-4; // numerical differentiation step
     let rho_plus = evaluate_density(field, &Angle::from_degrees(current.degrees + h));
     let rho_minus = evaluate_density(field, &Angle::from_degrees(current.degrees - h));
@@ -139,7 +146,11 @@ pub fn gradient_descent_step(
 ///
 /// NOT argmax — preserves randomness. P(θ) ∝ ρ(θ) within the peak region.
 /// The "random but reliable" property.
-pub fn density_weighted_sample(field: &DensityField, peak: &Angle, fwhm: f64) -> (Angle, CollapseMethod) {
+pub fn density_weighted_sample(
+    field: &DensityField,
+    peak: &Angle,
+    fwhm: f64,
+) -> (Angle, CollapseMethod) {
     let range = fwhm / 2.0;
     let samples: Vec<(Angle, f64)> = (0..100)
         .map(|i| {

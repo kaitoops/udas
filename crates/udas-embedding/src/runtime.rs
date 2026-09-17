@@ -72,7 +72,10 @@ impl RuntimeEmbedder {
                     }
                 }
             } else {
-                tracing::info!("BGE-M3 model not found at {}, skipping GPU path", m3_dir.display());
+                tracing::info!(
+                    "BGE-M3 model not found at {}, skipping GPU path",
+                    m3_dir.display()
+                );
             }
         }
 
@@ -94,17 +97,16 @@ impl RuntimeEmbedder {
                 }
             }
         } else {
-            tracing::info!("BGE-small model not found at {}, skipping CPU path", small_dir.display());
+            tracing::info!(
+                "BGE-small model not found at {}, skipping CPU path",
+                small_dir.display()
+            );
         }
 
         // FNV hash fallback
         tracing::info!("RuntimeEmbedder: using FNV hash (256-d, no semantic embedding)");
         let fnv = FnvHashEmbedder;
-        Self::wrap(
-            Box::new(fnv),
-            256,
-            "fnv-hash".to_string(),
-        )
+        Self::wrap(Box::new(fnv), 256, "fnv-hash".to_string())
     }
 
     fn wrap(inner: Box<dyn Embedder>, native_dim: usize, name: String) -> Self {
@@ -161,10 +163,10 @@ mod ort_backends {
 
 #[cfg(not(feature = "ort-backend"))]
 mod fnv_backends {
-    use anyhow::Result;
-    use async_trait::async_trait;
     use crate::embedder::{Embedder, Embedding};
     use crate::fnv::FnvHashEmbedder;
+    use anyhow::Result;
+    use async_trait::async_trait;
 
     /// FNV-based fallback when ort feature is not enabled.
     pub struct BgeM3Wrapper(FnvHashEmbedder);
@@ -178,8 +180,12 @@ mod fnv_backends {
         async fn embed(&self, text: &str) -> Result<Embedding> {
             self.0.embed(text).await
         }
-        fn native_dim(&self) -> usize { 1024 }
-        fn name(&self) -> &str { "bge-m3-unavailable" }
+        fn native_dim(&self) -> usize {
+            1024
+        }
+        fn name(&self) -> &str {
+            "bge-m3-unavailable"
+        }
     }
 
     pub struct BgeSmallWrapper(FnvHashEmbedder);
@@ -193,12 +199,20 @@ mod fnv_backends {
         async fn embed(&self, text: &str) -> Result<Embedding> {
             self.0.embed(text).await
         }
-        fn native_dim(&self) -> usize { 512 }
-        fn name(&self) -> &str { "bge-small-unavailable" }
+        fn native_dim(&self) -> usize {
+            512
+        }
+        fn name(&self) -> &str {
+            "bge-small-unavailable"
+        }
     }
 }
 
-#[cfg(feature = "ort-backend")]
-use ort_backends::{BgeM3Wrapper as BgeM3EmbedderWrapper, BgeSmallWrapper as BgeSmallEmbedderWrapper};
 #[cfg(not(feature = "ort-backend"))]
-use fnv_backends::{BgeM3Wrapper as BgeM3EmbedderWrapper, BgeSmallWrapper as BgeSmallEmbedderWrapper};
+use fnv_backends::{
+    BgeM3Wrapper as BgeM3EmbedderWrapper, BgeSmallWrapper as BgeSmallEmbedderWrapper,
+};
+#[cfg(feature = "ort-backend")]
+use ort_backends::{
+    BgeM3Wrapper as BgeM3EmbedderWrapper, BgeSmallWrapper as BgeSmallEmbedderWrapper,
+};

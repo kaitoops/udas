@@ -117,12 +117,16 @@ fn convert_time_of_day(time_str: &str) -> Option<String> {
 fn convert_day_of_week(day_str: &str) -> Option<String> {
     let is_weekend = match day_str.trim().to_lowercase().as_str() {
         "0" | "6" | "saturday" | "sunday" | "周六" | "周日" => true,
-        "1" | "2" | "3" | "4" | "5" | "monday" | "tuesday" | "wednesday"
-        | "thursday" | "friday" | "周一" | "周二" | "周三" | "周四" | "周五" => false,
+        "1" | "2" | "3" | "4" | "5" | "monday" | "tuesday" | "wednesday" | "thursday"
+        | "friday" | "周一" | "周二" | "周三" | "周四" | "周五" => false,
         _ => return None,
     };
 
-    let context = if is_weekend { "周末节律" } else { "工作日节律" };
+    let context = if is_weekend {
+        "周末节律"
+    } else {
+        "工作日节律"
+    };
     Some(format!("节律语境: {}", context))
 }
 

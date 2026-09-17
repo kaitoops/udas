@@ -49,4 +49,4 @@ pub use client::{EmbedClient, RemoteEmbedder};
 pub use server::EmbedServer;
 
 // Re-exports — transport types
-pub use transport::{create_transport, BoxListener, BoxStream, DuplexStream, Listener, Transport};
+pub use transport::{BoxListener, BoxStream, DuplexStream, Listener, Transport, create_transport};

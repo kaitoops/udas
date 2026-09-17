@@ -1187,8 +1187,7 @@ mod tests {
         let tmp = tempdir().expect("tempdir");
         std::fs::write(tmp.path().join("README.md"), "# Pack test").expect("write readme");
         std::fs::create_dir_all(tmp.path().join(".udas")).expect("mkdir");
-        std::fs::write(tmp.path().join(".udas").join("handoff.md"), "handoff")
-            .expect("handoff");
+        std::fs::write(tmp.path().join(".udas").join("handoff.md"), "handoff").expect("handoff");
         let prompt = match system_prompt_for_mode_with_context_skills_and_session(
             AppMode::Agent,
             tmp.path(),

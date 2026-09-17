@@ -25,16 +25,16 @@
 // Always available modules
 pub mod embedder;
 pub mod fnv;
-pub mod projector;
 pub mod gpu;
+pub mod projector;
 
 // Feature-gated modules (require ort + tokenizers)
-#[cfg(feature = "ort-backend")]
-pub mod pooling;
 #[cfg(feature = "ort-backend")]
 pub mod bge_m3;
 #[cfg(feature = "ort-backend")]
 pub mod bge_small;
+#[cfg(feature = "ort-backend")]
+pub mod pooling;
 
 // Cache module (requires sha2 for hash, tempfile for tests)
 pub mod cache;
@@ -42,9 +42,9 @@ pub mod cache;
 // Runtime selection (always available, gracefully degrades)
 pub mod runtime;
 
+pub use cache::CachedEmbedder;
 pub use embedder::{Embedder, Embedding, UNIFIED_DIM};
 pub use fnv::FnvHashEmbedder;
-pub use projector::DimensionProjector;
 pub use gpu::GpuState;
-pub use cache::CachedEmbedder;
+pub use projector::DimensionProjector;
 pub use runtime::RuntimeEmbedder;

@@ -23,8 +23,8 @@
 //!
 //! This ensures we can always roll back up to 3 versions.
 
-use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
+use std::path::{Path, PathBuf};
 
 /// Number of backup slots.
 const BACKUP_SLOTS: usize = 3;
@@ -56,7 +56,10 @@ impl HotFileManager {
 
     /// Get the path for a backup slot (1-indexed).
     pub fn backup_path(&self, slot: usize) -> PathBuf {
-        assert!(slot >= 1 && slot <= BACKUP_SLOTS, "slot must be 1..={BACKUP_SLOTS}");
+        assert!(
+            slot >= 1 && slot <= BACKUP_SLOTS,
+            "slot must be 1..={BACKUP_SLOTS}"
+        );
         let mut name = self
             .hot_file_path
             .file_name()
@@ -89,11 +92,17 @@ impl HotFileManager {
             let to = self.backup_path(slot + 1);
             if from.exists() {
                 if to.exists() {
-                    std::fs::remove_file(&to)
-                        .with_context(|| format!("failed to remove old backup: {}", to.display()))?;
+                    std::fs::remove_file(&to).with_context(|| {
+                        format!("failed to remove old backup: {}", to.display())
+                    })?;
                 }
-                std::fs::rename(&from, &to)
-                    .with_context(|| format!("failed to rotate backup {} → {}", from.display(), to.display()))?;
+                std::fs::rename(&from, &to).with_context(|| {
+                    format!(
+                        "failed to rotate backup {} → {}",
+                        from.display(),
+                        to.display()
+                    )
+                })?;
             }
         }
 
@@ -108,8 +117,9 @@ impl HotFileManager {
         }
 
         // Write new content
-        std::fs::write(&self.hot_file_path, content)
-            .with_context(|| format!("failed to write hot file: {}", self.hot_file_path.display()))?;
+        std::fs::write(&self.hot_file_path, content).with_context(|| {
+            format!("failed to write hot file: {}", self.hot_file_path.display())
+        })?;
 
         tracing::info!(
             "hot file updated: {} ({} bytes)",
@@ -147,7 +157,10 @@ impl HotFileManager {
     /// This restores the backup content to the hot file.
     /// The backup file itself is not deleted.
     pub fn rollback(&self, slot: usize) -> Result<()> {
-        assert!(slot >= 1 && slot <= BACKUP_SLOTS, "slot must be 1..={BACKUP_SLOTS}");
+        assert!(
+            slot >= 1 && slot <= BACKUP_SLOTS,
+            "slot must be 1..={BACKUP_SLOTS}"
+        );
         let backup = self.backup_path(slot);
         if !backup.exists() {
             anyhow::bail!("backup slot {} does not exist: {}", slot, backup.display());
@@ -205,7 +218,10 @@ fn replace_or_append_section(content: &str, header: &str, new_body: &str) -> Str
     let header_pattern = format!("## {}", header);
 
     // Find the section start
-    if let Some(start_idx) = lines.iter().position(|l| l.trim_start().starts_with(&header_pattern)) {
+    if let Some(start_idx) = lines
+        .iter()
+        .position(|l| l.trim_start().starts_with(&header_pattern))
+    {
         // Find the section end (next ## header or end)
         let end_idx = lines[start_idx + 1..]
             .iter()
@@ -316,7 +332,10 @@ second content
         mgr.write("version 2").unwrap();
         assert_eq!(mgr.read().unwrap(), "version 2");
         assert_eq!(mgr.backup_count(), 1);
-        assert_eq!(std::fs::read_to_string(mgr.backup_path(1)).unwrap(), "version 1");
+        assert_eq!(
+            std::fs::read_to_string(mgr.backup_path(1)).unwrap(),
+            "version 1"
+        );
 
         // Write version 3
         mgr.write("version 3").unwrap();
@@ -333,11 +352,20 @@ second content
         assert_eq!(mgr.read().unwrap(), "version 5");
         assert_eq!(mgr.backup_count(), 3);
         // bak-1 should be version 4
-        assert_eq!(std::fs::read_to_string(mgr.backup_path(1)).unwrap(), "version 4");
+        assert_eq!(
+            std::fs::read_to_string(mgr.backup_path(1)).unwrap(),
+            "version 4"
+        );
         // bak-2 should be version 3
-        assert_eq!(std::fs::read_to_string(mgr.backup_path(2)).unwrap(), "version 3");
+        assert_eq!(
+            std::fs::read_to_string(mgr.backup_path(2)).unwrap(),
+            "version 3"
+        );
         // bak-3 should be version 2 (version 1 was pushed out)
-        assert_eq!(std::fs::read_to_string(mgr.backup_path(3)).unwrap(), "version 2");
+        assert_eq!(
+            std::fs::read_to_string(mgr.backup_path(3)).unwrap(),
+            "version 2"
+        );
 
         // Test rollback
         mgr.rollback(1).unwrap();

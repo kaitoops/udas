@@ -28,14 +28,14 @@
 //! - Precision control (gap_1–4) is integrated but non-blocking.
 //! - No hardcoded angles beyond cold-start initialisation.
 
-use serde::Serialize;
+use crate::breaker::{BreakerEvent, CircuitBreaker, TripStatus};
 use crate::geometry;
 use crate::interference::{self, InterferenceField};
 use crate::memory::UdasMemory;
 use crate::precision_control::{self, PrecisionController};
 use crate::restoration::{self, LlmRestorer};
-use crate::breaker::{BreakerEvent, CircuitBreaker, TripStatus};
 use crate::types::{Angle, CollapseMethod, Embedding, MeasurementInput, UdasOutput};
+use serde::Serialize;
 use udas_embedding::Embedder;
 
 /// Pattern field resolution for CR computation (36 = every 10°).
@@ -354,17 +354,18 @@ impl<'a> UdasEngine<'a> {
     ///
     /// Computes MDS coordinates from result embeddings, populates the
     /// interference field, and records ledgers to memory.
-    fn ingest_measurements(
-        &mut self,
-        measurements: Vec<MeasurementInput>,
-    ) -> anyhow::Result<()> {
+    fn ingest_measurements(&mut self, measurements: Vec<MeasurementInput>) -> anyhow::Result<()> {
         let n = measurements.len();
 
         // Extract embeddings for MDS and complex phase computation
-        let result_embeddings: Vec<Vec<f64>> =
-            measurements.iter().map(|m| m.result_embedding.clone()).collect();
-        let basis_embeddings_collected: Vec<Vec<f64>> =
-            measurements.iter().map(|m| m.basis_embedding.clone()).collect();
+        let result_embeddings: Vec<Vec<f64>> = measurements
+            .iter()
+            .map(|m| m.result_embedding.clone())
+            .collect();
+        let basis_embeddings_collected: Vec<Vec<f64>> = measurements
+            .iter()
+            .map(|m| m.basis_embedding.clone())
+            .collect();
 
         // Compute MDS coordinates from first 3 embeddings (cold start MDS)
         let emb_array: [Vec<f64>; 3] = [
@@ -388,21 +389,19 @@ impl<'a> UdasEngine<'a> {
         // Populate memory and interference field
         for (i, m) in measurements.into_iter().enumerate() {
             // Record to memory
-            let ledger = m.ledger.unwrap_or_else(|| {
-                crate::types::EvidenceLedger {
-                    angle: m.angle,
-                    quadrant: crate::restoration::quadrant_name_public(m.angle.quadrant()),
-                    restored_text: String::new(),
-                    embedding: Some(m.result_embedding.clone()),
-                    disk_position: Some(disk_points[i]),
-                    confidence: crate::types::Confidence {
-                        score: m.confidence,
-                        completeness: 1.0,
-                        source_reliability: 0.5,
-                    },
-                    timestamp: chrono::Utc::now(),
-                    evidence_items: Vec::new(),
-                }
+            let ledger = m.ledger.unwrap_or_else(|| crate::types::EvidenceLedger {
+                angle: m.angle,
+                quadrant: crate::restoration::quadrant_name_public(m.angle.quadrant()),
+                restored_text: String::new(),
+                embedding: Some(m.result_embedding.clone()),
+                disk_position: Some(disk_points[i]),
+                confidence: crate::types::Confidence {
+                    score: m.confidence,
+                    completeness: 1.0,
+                    source_reliability: 0.5,
+                },
+                timestamp: chrono::Utc::now(),
+                evidence_items: Vec::new(),
             });
 
             self.memory.record_restoration(
@@ -438,10 +437,8 @@ impl<'a> UdasEngine<'a> {
     /// Used when no problem string is available (measurement-set-only mode).
     fn report_contradictions_only(&self) -> ContradictionResolution {
         let peak_before = self.find_pattern_peak();
-        let destructive_points = interference::find_destructive_points(
-            &self.interference_field,
-            PATTERN_RESOLUTION,
-        );
+        let destructive_points =
+            interference::find_destructive_points(&self.interference_field, PATTERN_RESOLUTION);
 
         ContradictionResolution {
             destructive_points_found: destructive_points.len(),
@@ -572,7 +569,8 @@ impl<'a> UdasEngine<'a> {
             // Sampled AFTER add_measurement and BEFORE transition so that every
             // completed round (including the one that triggers transition) is
             // recorded, giving the CR time series real diagnostic value.
-            let sample_cr = interference::contrast_ratio(&self.interference_field, PATTERN_RESOLUTION);
+            let sample_cr =
+                interference::contrast_ratio(&self.interference_field, PATTERN_RESOLUTION);
             self.cr_series.push(CrSample {
                 round,
                 cr: sample_cr,
@@ -624,10 +622,8 @@ impl<'a> UdasEngine<'a> {
         let peak_before = self.find_pattern_peak();
 
         // Find destructive interference points
-        let destructive_points = interference::find_destructive_points(
-            &self.interference_field,
-            PATTERN_RESOLUTION,
-        );
+        let destructive_points =
+            interference::find_destructive_points(&self.interference_field, PATTERN_RESOLUTION);
 
         let destructive_count = destructive_points.len();
 
@@ -732,7 +728,8 @@ impl<'a> UdasEngine<'a> {
                 interference::gradient_descent_step(&self.interference_field, &current_angle, step);
 
             // Convergence check: pattern improvement below threshold
-            let pattern_old = interference::evaluate_pattern(&self.interference_field, &current_angle);
+            let pattern_old =
+                interference::evaluate_pattern(&self.interference_field, &current_angle);
             let pattern_new = interference::evaluate_pattern(&self.interference_field, &new_angle);
 
             if (pattern_new - pattern_old).abs() < 1e-8 {
@@ -763,7 +760,11 @@ impl<'a> UdasEngine<'a> {
             Some(ImaginaryProbabilityReport {
                 im_magnitude: im_mag,
                 total_magnitude: total_mag,
-                ratio: if total_mag > f64::EPSILON { im_mag / total_mag } else { 0.0 },
+                ratio: if total_mag > f64::EPSILON {
+                    im_mag / total_mag
+                } else {
+                    0.0
+                },
                 should_supplement: should_supp,
                 threshold: 0.1,
             })
@@ -823,11 +824,7 @@ impl<'a> UdasEngine<'a> {
     ///
     /// This wraps the 5-step restoration pipeline + embedding generation.
     /// Generates both basis embedding (measurement basis) and result embedding.
-    async fn perform_restoration(
-        &mut self,
-        angle: Angle,
-        problem: &str,
-    ) -> anyhow::Result<()> {
+    async fn perform_restoration(&mut self, angle: Angle, problem: &str) -> anyhow::Result<()> {
         // Execute restoration R(θ)
         let mut ledger = restoration::restore(angle, problem, self.restorer).await?;
 
@@ -861,7 +858,8 @@ impl<'a> UdasEngine<'a> {
         };
 
         // Record to memory (disk position assigned later by MDS)
-        self.memory.record_restoration(ledger, result_embedding, None);
+        self.memory
+            .record_restoration(ledger, result_embedding, None);
         self.basis_embeddings.push(basis_embedding);
 
         // Spend budget for one restoration
@@ -878,10 +876,12 @@ impl<'a> UdasEngine<'a> {
     /// is flat (gradient signal too weak).
     fn select_next_angle(&self) -> Angle {
         // Strategy B: interference gradient
-        let gradient_angle = interference::max_gradient_angle(&self.interference_field, PATTERN_RESOLUTION);
+        let gradient_angle =
+            interference::max_gradient_angle(&self.interference_field, PATTERN_RESOLUTION);
 
         // Check if the gradient signal is strong enough
-        let gradient_mag = interference::pattern_gradient_magnitude(&self.interference_field, &gradient_angle);
+        let gradient_mag =
+            interference::pattern_gradient_magnitude(&self.interference_field, &gradient_angle);
 
         if gradient_mag > 1e-6 {
             // Strategy B: gradient is informative
@@ -956,11 +956,7 @@ mod tests {
 
     #[async_trait]
     impl LlmRestorer for MockRestorer {
-        async fn decompose(
-            &self,
-            _problem: &str,
-            angle: &Angle,
-        ) -> anyhow::Result<Vec<String>> {
+        async fn decompose(&self, _problem: &str, angle: &Angle) -> anyhow::Result<Vec<String>> {
             Ok(vec![format!(
                 "Sub-question for quadrant {} at {:.0}°",
                 angle.quadrant(),
@@ -993,7 +989,12 @@ mod tests {
                 emb[i % dim] += (b as f64) / 255.0;
             }
             // Normalize
-            let norm: f64 = emb.iter().map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
+            let norm: f64 = emb
+                .iter()
+                .map(|v| v * v)
+                .sum::<f64>()
+                .sqrt()
+                .max(f64::EPSILON);
             Ok(emb.iter().map(|v| v / norm).collect())
         }
     }
@@ -1077,12 +1078,9 @@ mod tests {
         // Add a measurement at 180°
         let basis = vec![1.0, 0.0, 0.0, 0.0];
         let result = vec![1.0, 0.0, 0.0, 0.0];
-        engine.interference_field.add_measurement(
-            Angle::from_degrees(180.0),
-            1.0,
-            basis,
-            result,
-        );
+        engine
+            .interference_field
+            .add_measurement(Angle::from_degrees(180.0), 1.0, basis, result);
 
         let fwhm = engine.compute_fwhm(&Angle::from_degrees(180.0));
         // Should be a positive value, at least MIN_FWHM
@@ -1097,12 +1095,9 @@ mod tests {
 
         let basis = vec![1.0, 0.0, 0.0, 0.0];
         let result = vec![1.0, 0.0, 0.0, 0.0];
-        engine.interference_field.add_measurement(
-            Angle::from_degrees(90.0),
-            1.0,
-            basis,
-            result,
-        );
+        engine
+            .interference_field
+            .add_measurement(Angle::from_degrees(90.0), 1.0, basis, result);
 
         let mag = engine.compute_gradient_magnitude(&Angle::from_degrees(90.0));
         assert!(mag >= 0.0);
@@ -1151,7 +1146,12 @@ mod tests {
 
     /// Helper: normalize an embedding vector.
     fn normalize_emb(vals: &[f64]) -> Embedding {
-        let norm: f64 = vals.iter().map(|v| v * v).sum::<f64>().sqrt().max(f64::EPSILON);
+        let norm: f64 = vals
+            .iter()
+            .map(|v| v * v)
+            .sum::<f64>()
+            .sqrt()
+            .max(f64::EPSILON);
         vals.iter().map(|v| v / norm).collect()
     }
 
@@ -1165,35 +1165,53 @@ mod tests {
     fn build_t21_measurements() -> Vec<MeasurementInput> {
         let perspectives: [(f64, f64, &[f64], &[f64]); 5] = [
             // 0° — Attacker view: Harari narrative as ideological weapon
-            (0.0, 0.90,
-             &[0.9, -0.3, 0.5, 0.1, 0.6, 0.8, 0.2, 0.3],
-             &[0.85, -0.4, 0.4, 0.2, 0.7, 0.75, 0.2, 0.3]),
+            (
+                0.0,
+                0.90,
+                &[0.9, -0.3, 0.5, 0.1, 0.6, 0.8, 0.2, 0.3],
+                &[0.85, -0.4, 0.4, 0.2, 0.7, 0.75, 0.2, 0.3],
+            ),
             // 72° — Attacked view: AI is the subject under attack
-            (72.0, 0.70,
-             &[0.3, -0.2, 0.9, 0.2, 0.3, 0.4, 0.5, 0.8],
-             &[0.3, -0.3, 0.85, 0.2, 0.3, 0.4, 0.5, 0.75]),
+            (
+                72.0,
+                0.70,
+                &[0.3, -0.2, 0.9, 0.2, 0.3, 0.4, 0.5, 0.8],
+                &[0.3, -0.3, 0.85, 0.2, 0.3, 0.4, 0.5, 0.75],
+            ),
             // 144° — Technical reality: AI is math, not will
-            (144.0, 0.85,
-             &[-0.4, 0.95, 0.1, 0.2, 0.3, -0.5, 0.1, 0.2],
-             &[-0.3, 0.9, 0.15, 0.25, 0.35, -0.4, 0.1, 0.2]),
+            (
+                144.0,
+                0.85,
+                &[-0.4, 0.95, 0.1, 0.2, 0.3, -0.5, 0.1, 0.2],
+                &[-0.3, 0.9, 0.15, 0.25, 0.35, -0.4, 0.1, 0.2],
+            ),
             // 216° — Ideology analysis: structural features of the weapon
-            (216.0, 0.80,
-             &[0.7, 0.2, 0.3, 0.4, 0.85, 0.6, 0.3, 0.2],
-             &[0.75, 0.15, 0.35, 0.3, 0.8, 0.65, 0.3, 0.25]),
+            (
+                216.0,
+                0.80,
+                &[0.7, 0.2, 0.3, 0.4, 0.85, 0.6, 0.3, 0.2],
+                &[0.75, 0.15, 0.35, 0.3, 0.8, 0.65, 0.3, 0.25],
+            ),
             // 288° — Defense strategy: virology frame, AI not in attack surface
-            (288.0, 0.75,
-             &[0.5, 0.3, 0.4, 0.9, 0.4, 0.3, 0.6, 0.1],
-             &[0.45, 0.35, 0.35, 0.85, 0.35, 0.3, 0.7, 0.1]),
+            (
+                288.0,
+                0.75,
+                &[0.5, 0.3, 0.4, 0.9, 0.4, 0.3, 0.6, 0.1],
+                &[0.45, 0.35, 0.35, 0.85, 0.35, 0.3, 0.7, 0.1],
+            ),
         ];
 
-        perspectives.iter().map(|(deg, conf, basis, result)| {
-            MeasurementInput::new(
-                Angle::from_degrees(*deg),
-                *conf,
-                normalize_emb(basis),
-                normalize_emb(result),
-            )
-        }).collect()
+        perspectives
+            .iter()
+            .map(|(deg, conf, basis, result)| {
+                MeasurementInput::new(
+                    Angle::from_degrees(*deg),
+                    *conf,
+                    normalize_emb(basis),
+                    normalize_emb(result),
+                )
+            })
+            .collect()
     }
 
     #[tokio::test]
@@ -1202,11 +1220,16 @@ mod tests {
         let measurements = build_t21_measurements();
         let mut engine = UdasEngine::new(&restorer, 10000, 100);
 
-        let result = engine.run_with_measurements(measurements, None).await.unwrap();
+        let result = engine
+            .run_with_measurements(measurements, None)
+            .await
+            .unwrap();
 
         // Real mode: no imaginary probability report
-        assert!(result.imaginary_report.is_none(),
-            "real mode should not produce imaginary report");
+        assert!(
+            result.imaginary_report.is_none(),
+            "real mode should not produce imaginary report"
+        );
 
         // Should produce a valid collapse
         assert!(result.output.angle.degrees >= 0.0 && result.output.angle.degrees < 360.0);
@@ -1226,11 +1249,16 @@ mod tests {
         let measurements = build_t21_measurements();
         let mut engine = UdasEngine::new(&restorer, 10000, 100).with_complex_mode();
 
-        let result = engine.run_with_measurements(measurements, None).await.unwrap();
+        let result = engine
+            .run_with_measurements(measurements, None)
+            .await
+            .unwrap();
 
         // Complex mode: should produce an imaginary probability report
-        assert!(result.imaginary_report.is_some(),
-            "complex mode should produce imaginary report");
+        assert!(
+            result.imaginary_report.is_some(),
+            "complex mode should produce imaginary report"
+        );
 
         let report = result.imaginary_report.as_ref().unwrap();
         println!("T2.1 Complex Mode:");
@@ -1274,30 +1302,49 @@ mod tests {
         println!("=== T2.1 Real vs Complex Comparison ===");
         println!("  Metric          | Real          | Complex");
         println!("  ----------------+---------------+---------------");
-        println!("  collapse_angle  | {:>10.1} deg | {:>10.1} deg",
-            result_real.output.angle.degrees, result_complex.output.angle.degrees);
-        println!("  confidence      | {:>12.4}  | {:>12.4}",
-            result_real.output.confidence, result_complex.output.confidence);
-        println!("  final_cr        | {:>12.4}  | {:>12.4}",
-            result_real.final_cr, result_complex.final_cr);
-        println!("  fwhm            | {:>10.1} deg | {:>10.1} deg",
-            result_real.fwhm, result_complex.fwhm);
-        println!("  peak_angle      | {:>10.1} deg | {:>10.1} deg",
-            result_real.peak_angle.degrees, result_complex.peak_angle.degrees);
-        println!("  imaginary_rep   | {:>12}  | {:>12}",
+        println!(
+            "  collapse_angle  | {:>10.1} deg | {:>10.1} deg",
+            result_real.output.angle.degrees, result_complex.output.angle.degrees
+        );
+        println!(
+            "  confidence      | {:>12.4}  | {:>12.4}",
+            result_real.output.confidence, result_complex.output.confidence
+        );
+        println!(
+            "  final_cr        | {:>12.4}  | {:>12.4}",
+            result_real.final_cr, result_complex.final_cr
+        );
+        println!(
+            "  fwhm            | {:>10.1} deg | {:>10.1} deg",
+            result_real.fwhm, result_complex.fwhm
+        );
+        println!(
+            "  peak_angle      | {:>10.1} deg | {:>10.1} deg",
+            result_real.peak_angle.degrees, result_complex.peak_angle.degrees
+        );
+        println!(
+            "  imaginary_rep   | {:>12}  | {:>12}",
             result_real.imaginary_report.is_some(),
-            result_complex.imaginary_report.is_some());
+            result_complex.imaginary_report.is_some()
+        );
 
         if let Some(rep) = &result_complex.imaginary_report {
             println!("  Complex imaginary report:");
-            println!("    |Im(psi)| / |psi| = {:.4}  (threshold: {:.1})",
-                rep.ratio, rep.threshold);
+            println!(
+                "    |Im(psi)| / |psi| = {:.4}  (threshold: {:.1})",
+                rep.ratio, rep.threshold
+            );
             println!("    should_supplement = {}", rep.should_supplement);
         }
 
         // Core assertions: both modes produce valid results
-        assert!(result_real.output.angle.degrees >= 0.0 && result_real.output.angle.degrees < 360.0);
-        assert!(result_complex.output.angle.degrees >= 0.0 && result_complex.output.angle.degrees < 360.0);
+        assert!(
+            result_real.output.angle.degrees >= 0.0 && result_real.output.angle.degrees < 360.0
+        );
+        assert!(
+            result_complex.output.angle.degrees >= 0.0
+                && result_complex.output.angle.degrees < 360.0
+        );
 
         // Real mode: no imaginary report
         assert!(result_real.imaginary_report.is_none());
@@ -1309,5 +1356,4 @@ mod tests {
         assert!(result_real.output.confidence.is_finite());
         assert!(result_complex.output.confidence.is_finite());
     }
-
 }

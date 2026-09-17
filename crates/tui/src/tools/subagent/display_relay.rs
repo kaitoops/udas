@@ -60,10 +60,7 @@ impl SubAgentDisplayRelay {
 
         // Write header so the display client sees something immediately.
         if let Ok(mut f) = fs::File::create(&output_path) {
-            let _ = writeln!(
-                f,
-                "\x1b[1m\x1b[36m═══ Sub-Agent: {agent_id} ═══\x1b[0m\n"
-            );
+            let _ = writeln!(f, "\x1b[1m\x1b[36m═══ Sub-Agent: {agent_id} ═══\x1b[0m\n");
         }
 
         Self {
@@ -94,9 +91,7 @@ impl SubAgentDisplayRelay {
 
     /// Log a progress status update (e.g. "step 3/20: requesting model").
     pub fn write_status(&self, status: &str) {
-        self.append(&format!(
-            "\x1b[34m[STATUS]\x1b[0m {status}"
-        ));
+        self.append(&format!("\x1b[34m[STATUS]\x1b[0m {status}"));
     }
 
     /// Log a thinking (reasoning) block from the LLM.
@@ -157,7 +152,11 @@ impl SubAgentDisplayRelay {
 
     /// Log a tool result.
     pub fn write_tool_result(&self, tool_name: &str, ok: bool) {
-        let icon = if ok { "\x1b[32m✓\x1b[0m" } else { "\x1b[31m✗\x1b[0m" };
+        let icon = if ok {
+            "\x1b[32m✓\x1b[0m"
+        } else {
+            "\x1b[31m✗\x1b[0m"
+        };
         self.append(&format!("{icon} {tool_name}"));
     }
 
@@ -270,15 +269,18 @@ impl SubAgentDisplayRelay {
                 .args([
                     "/C",
                     "start",
-                    "",               // 空标题（必须，否则路径含空格会解析错误）
-                    &exe_str,          // 程序路径
-                    "agent-display",   // 子命令
-                    agent_id,          // agent ID
+                    "",              // 空标题（必须，否则路径含空格会解析错误）
+                    &exe_str,        // 程序路径
+                    "agent-display", // 子命令
+                    agent_id,        // agent ID
                 ])
                 .spawn()
             {
                 Ok(child) => {
-                    tracing::info!("launched display window for agent {agent_id} (pid={})", child.id());
+                    tracing::info!(
+                        "launched display window for agent {agent_id} (pid={})",
+                        child.id()
+                    );
                     child
                 }
                 Err(e) => {

@@ -67,7 +67,7 @@ impl CslLevel {
     pub fn requires_hot_file_update(&self) -> bool {
         match self {
             CslLevel::Detail | CslLevel::LocalFix => false,
-            CslLevel::Functional => false, // AGENT evaluates
+            CslLevel::Functional => false,   // AGENT evaluates
             CslLevel::Architectural => true, // Force update
         }
     }
@@ -173,16 +173,28 @@ impl CslClassifier {
         // --- CSL-3: Architectural changes ---
         let mut arch_reasons = Vec::new();
         if !features.crates_added.is_empty() {
-            arch_reasons.push(format!("crates added: {}", features.crates_added.join(", ")));
+            arch_reasons.push(format!(
+                "crates added: {}",
+                features.crates_added.join(", ")
+            ));
         }
         if !features.crates_removed.is_empty() {
-            arch_reasons.push(format!("crates removed: {}", features.crates_removed.join(", ")));
+            arch_reasons.push(format!(
+                "crates removed: {}",
+                features.crates_removed.join(", ")
+            ));
         }
         if !features.modules_added.is_empty() {
-            arch_reasons.push(format!("modules added: {}", features.modules_added.join(", ")));
+            arch_reasons.push(format!(
+                "modules added: {}",
+                features.modules_added.join(", ")
+            ));
         }
         if !features.modules_removed.is_empty() {
-            arch_reasons.push(format!("modules removed: {}", features.modules_removed.join(", ")));
+            arch_reasons.push(format!(
+                "modules removed: {}",
+                features.modules_removed.join(", ")
+            ));
         }
         if features.workspace_toml_changed {
             arch_reasons.push("workspace Cargo.toml changed".to_string());
@@ -194,25 +206,43 @@ impl CslClassifier {
         // --- CSL-2: Functional changes ---
         let mut func_reasons = Vec::new();
         if !features.pub_fns_added.is_empty() {
-            func_reasons.push(format!("pub fn added: {}", features.pub_fns_added.join(", ")));
+            func_reasons.push(format!(
+                "pub fn added: {}",
+                features.pub_fns_added.join(", ")
+            ));
         }
         if !features.pub_fns_removed.is_empty() {
-            func_reasons.push(format!("pub fn removed: {}", features.pub_fns_removed.join(", ")));
+            func_reasons.push(format!(
+                "pub fn removed: {}",
+                features.pub_fns_removed.join(", ")
+            ));
         }
         if !features.pub_fns_modified.is_empty() {
-            func_reasons.push(format!("pub fn modified: {}", features.pub_fns_modified.join(", ")));
+            func_reasons.push(format!(
+                "pub fn modified: {}",
+                features.pub_fns_modified.join(", ")
+            ));
         }
         if !features.traits_impl_added.is_empty() {
-            func_reasons.push(format!("trait impl added: {}", features.traits_impl_added.join(", ")));
+            func_reasons.push(format!(
+                "trait impl added: {}",
+                features.traits_impl_added.join(", ")
+            ));
         }
         if !features.traits_impl_removed.is_empty() {
-            func_reasons.push(format!("trait impl removed: {}", features.traits_impl_removed.join(", ")));
+            func_reasons.push(format!(
+                "trait impl removed: {}",
+                features.traits_impl_removed.join(", ")
+            ));
         }
         if !features.deps_added.is_empty() {
             func_reasons.push(format!("deps added: {}", features.deps_added.join(", ")));
         }
         if !features.deps_removed.is_empty() {
-            func_reasons.push(format!("deps removed: {}", features.deps_removed.join(", ")));
+            func_reasons.push(format!(
+                "deps removed: {}",
+                features.deps_removed.join(", ")
+            ));
         }
         if !func_reasons.is_empty() {
             return CslResult::new(CslLevel::Functional, func_reasons, features.clone());
@@ -224,9 +254,10 @@ impl CslClassifier {
         let code_lines_added = features.lines_added;
         let code_lines_removed = features.lines_removed;
         if code_lines_added > 0 || code_lines_removed > 0 {
-            let mut reasons = vec![
-                format!("code changed (+{}/-{} lines)", code_lines_added, code_lines_removed),
-            ];
+            let mut reasons = vec![format!(
+                "code changed (+{}/-{} lines)",
+                code_lines_added, code_lines_removed
+            )];
             if features.files_changed > 1 {
                 reasons.push(format!("{} files affected", features.files_changed));
             }

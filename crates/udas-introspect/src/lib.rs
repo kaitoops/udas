@@ -21,7 +21,7 @@ pub mod diff;
 pub mod hot_file;
 pub mod timeline;
 
-pub use csl::{CslLevel, CslResult, CslClassifier};
+pub use csl::{CslClassifier, CslLevel, CslResult};
 pub use diff::{ChangeFeatures, DiffAnalyzer};
 pub use hot_file::HotFileManager;
 pub use timeline::{TimelineEntry, TimelineEntryKind, TimelineLogger};

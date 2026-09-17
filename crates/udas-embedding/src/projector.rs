@@ -259,11 +259,7 @@ mod tests {
         let proj_a = proj.project(&vec_a);
         let proj_b = proj.project(&vec_b);
 
-        let cos_sim = proj_a
-            .iter()
-            .zip(&proj_b)
-            .map(|(a, b)| a * b)
-            .sum::<f64>();
+        let cos_sim = proj_a.iter().zip(&proj_b).map(|(a, b)| a * b).sum::<f64>();
 
         // Similar inputs should have high cosine similarity (> 0.95)
         assert!(

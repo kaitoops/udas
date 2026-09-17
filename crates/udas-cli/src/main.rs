@@ -68,7 +68,6 @@ impl LlmRestorer for NullRestorer {
     }
 }
 
-
 // --- CLI Structure ---
 
 #[derive(Parser)]
@@ -292,15 +291,17 @@ async fn main() -> Result<()> {
                 .map(|(a, _)| a.degrees)
                 .collect();
 
-            let imaginary_report = result.imaginary_report.as_ref().map(|r| {
-                ImaginaryReportOutput {
-                    im_magnitude: r.im_magnitude,
-                    total_magnitude: r.total_magnitude,
-                    ratio: r.ratio,
-                    should_supplement: r.should_supplement,
-                    threshold: r.threshold,
-                }
-            });
+            let imaginary_report =
+                result
+                    .imaginary_report
+                    .as_ref()
+                    .map(|r| ImaginaryReportOutput {
+                        im_magnitude: r.im_magnitude,
+                        total_magnitude: r.total_magnitude,
+                        ratio: r.ratio,
+                        should_supplement: r.should_supplement,
+                        threshold: r.threshold,
+                    });
 
             let output = ComputeResult {
                 collapse: CollapseOutput {
@@ -319,8 +320,12 @@ async fn main() -> Result<()> {
                 contradiction_resolution: {
                     let cr = result.contradiction_resolution.as_ref();
                     ContradictionOutput {
-                        destructive_points_found: cr.map(|c| c.destructive_points_found).unwrap_or(0),
-                        supplementary_measurements: cr.map(|c| c.supplementary_measurements).unwrap_or(0),
+                        destructive_points_found: cr
+                            .map(|c| c.destructive_points_found)
+                            .unwrap_or(0),
+                        supplementary_measurements: cr
+                            .map(|c| c.supplementary_measurements)
+                            .unwrap_or(0),
                         peak_before_degrees: cr.map(|c| c.peak_before.degrees).unwrap_or(0.0),
                         peak_after_degrees: cr.map(|c| c.peak_after.degrees).unwrap_or(0.0),
                         shift_degrees: cr.map(|c| c.shift_degrees).unwrap_or(0.0),
@@ -334,17 +339,29 @@ async fn main() -> Result<()> {
             let json = serde_json::to_string_pretty(&output)?;
             println!("{json}");
         }
-        Command::Similarity { text_a, text_b, remote } => {
+        Command::Similarity {
+            text_a,
+            text_b,
+            remote,
+        } => {
             let (emb_a, emb_b, backend_name) = if remote {
                 let config = udas_embed_service::ClientConfig::default();
                 let embedder = udas_embed_service::RemoteEmbedder::connect(config).await?;
                 eprintln!("[udas-cli] embedding backend: remote");
-                (embedder.embed(&text_a).await?, embedder.embed(&text_b).await?, "remote".to_string())
+                (
+                    embedder.embed(&text_a).await?,
+                    embedder.embed(&text_b).await?,
+                    "remote".to_string(),
+                )
             } else {
                 let embedder = RuntimeEmbedder::auto();
                 let name = embedder.backend_name().to_string();
                 eprintln!("[udas-cli] embedding backend: {}", name);
-                (embedder.embed(&text_a).await?, embedder.embed(&text_b).await?, name)
+                (
+                    embedder.embed(&text_a).await?,
+                    embedder.embed(&text_b).await?,
+                    name,
+                )
             };
 
             let sim = cosine_similarity(&emb_a, &emb_b);
@@ -454,16 +471,15 @@ fn stop_embed_service() -> Result<()> {
     let pid_file = pid_file_path();
 
     if !pid_file.exists() {
-        eprintln!("[udas-cli] No PID file found at {}. Service may not be running.", pid_file.display());
+        eprintln!(
+            "[udas-cli] No PID file found at {}. Service may not be running.",
+            pid_file.display()
+        );
         return Ok(());
     }
 
-    let pid_str = std::fs::read_to_string(&pid_file)
-        .context("Failed to read PID file")?;
-    let pid: u32 = pid_str
-        .trim()
-        .parse()
-        .context("Invalid PID in PID file")?;
+    let pid_str = std::fs::read_to_string(&pid_file).context("Failed to read PID file")?;
+    let pid: u32 = pid_str.trim().parse().context("Invalid PID in PID file")?;
 
     eprintln!("[udas-cli] Stopping embed service (PID: {pid})...");
 
@@ -525,31 +541,29 @@ async fn status_embed_service() -> Result<()> {
 
     let config = udas_embed_service::ClientConfig::default();
     match udas_embed_service::EmbedClient::connect(config).await {
-        Ok(client) => {
-            match client.info().await {
-                Ok(info) => {
-                    let output = serde_json::json!({
-                        "running": true,
-                        "pid": pid,
-                        "backend": info.backend,
-                        "native_dim": info.native_dim,
-                        "output_dim": info.output_dim,
-                        "model_dir": info.model_dir,
-                        "uptime_secs": info.uptime_secs,
-                        "requests_served": info.requests_served,
-                    });
-                    println!("{}", serde_json::to_string_pretty(&output)?);
-                }
-                Err(e) => {
-                    let output = serde_json::json!({
-                        "running": false,
-                        "pid": pid,
-                        "error": format!("info request failed: {e}"),
-                    });
-                    println!("{}", serde_json::to_string_pretty(&output)?);
-                }
+        Ok(client) => match client.info().await {
+            Ok(info) => {
+                let output = serde_json::json!({
+                    "running": true,
+                    "pid": pid,
+                    "backend": info.backend,
+                    "native_dim": info.native_dim,
+                    "output_dim": info.output_dim,
+                    "model_dir": info.model_dir,
+                    "uptime_secs": info.uptime_secs,
+                    "requests_served": info.requests_served,
+                });
+                println!("{}", serde_json::to_string_pretty(&output)?);
             }
-        }
+            Err(e) => {
+                let output = serde_json::json!({
+                    "running": false,
+                    "pid": pid,
+                    "error": format!("info request failed: {e}"),
+                });
+                println!("{}", serde_json::to_string_pretty(&output)?);
+            }
+        },
         Err(e) => {
             let output = serde_json::json!({
                 "running": false,
@@ -567,20 +581,18 @@ async fn status_embed_service() -> Result<()> {
 async fn ping_embed_service() -> Result<()> {
     let config = udas_embed_service::ClientConfig::default();
     match udas_embed_service::EmbedClient::connect(config).await {
-        Ok(client) => {
-            match client.ping().await {
-                Ok(uptime) => {
-                    let output = serde_json::json!({
-                        "pong": true,
-                        "uptime_secs": uptime,
-                    });
-                    println!("{}", serde_json::to_string_pretty(&output)?);
-                }
-                Err(e) => {
-                    bail!("ping failed: {e}");
-                }
+        Ok(client) => match client.ping().await {
+            Ok(uptime) => {
+                let output = serde_json::json!({
+                    "pong": true,
+                    "uptime_secs": uptime,
+                });
+                println!("{}", serde_json::to_string_pretty(&output)?);
             }
-        }
+            Err(e) => {
+                bail!("ping failed: {e}");
+            }
+        },
         Err(e) => {
             bail!("connect failed: {e}");
         }
@@ -593,8 +605,11 @@ async fn ping_embed_service() -> Result<()> {
 /// Compute cosine similarity between two vectors.
 fn cosine_similarity(a: &[f64], b: &[f64]) -> f64 {
     debug_assert_eq!(
-        a.len(), b.len(),
-        "embedding dimension mismatch: {} vs {}", a.len(), b.len()
+        a.len(),
+        b.len(),
+        "embedding dimension mismatch: {} vs {}",
+        a.len(),
+        b.len()
     );
 
     let dot: f64 = a.iter().zip(b.iter()).map(|(x, y)| x * y).sum();

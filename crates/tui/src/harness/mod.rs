@@ -105,11 +105,14 @@ impl AgentRole {
                 Self::Evaluator => "evaluator",
                 Self::Generator => "generator",
             })
-            .join(format!("{}_constraints.json", match self {
-                Self::Planner => "planner",
-                Self::Evaluator => "evaluator",
-                Self::Generator => "generator",
-            }))
+            .join(format!(
+                "{}_constraints.json",
+                match self {
+                    Self::Planner => "planner",
+                    Self::Evaluator => "evaluator",
+                    Self::Generator => "generator",
+                }
+            ))
     }
 }
 
@@ -236,8 +239,10 @@ impl HarnessRuntime {
     pub fn init() -> anyhow::Result<Self> {
         let root = harness_root().clone();
         let planner_constraints = load_agent_constraints(&AgentRole::Planner.constraints_path())?;
-        let evaluator_constraints = load_agent_constraints(&AgentRole::Evaluator.constraints_path())?;
-        let generator_constraints = load_agent_constraints(&AgentRole::Generator.constraints_path())?;
+        let evaluator_constraints =
+            load_agent_constraints(&AgentRole::Evaluator.constraints_path())?;
+        let generator_constraints =
+            load_agent_constraints(&AgentRole::Generator.constraints_path())?;
 
         Ok(Self {
             root,

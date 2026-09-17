@@ -86,7 +86,9 @@ impl UdasMemory {
 }
 
 impl Default for UdasMemory {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// Persist memory to disk (phase 2: SQLite).
@@ -99,8 +101,7 @@ pub fn persist_ledgers(ledgers: &[EvidenceLedger]) -> anyhow::Result<String> {
 
 /// Load memory from disk (phase 2: SQLite).
 pub fn load_ledgers(json: &str) -> anyhow::Result<Vec<EvidenceLedger>> {
-    serde_json::from_str(json)
-        .map_err(|e| anyhow::anyhow!("deserialization failed: {}", e))
+    serde_json::from_str(json).map_err(|e| anyhow::anyhow!("deserialization failed: {}", e))
 }
 
 #[cfg(test)]
@@ -115,7 +116,11 @@ mod tests {
             restored_text: String::new(),
             embedding: None,
             disk_position: None,
-            confidence: Confidence { score: 0.5, completeness: 0.5, source_reliability: 0.5 },
+            confidence: Confidence {
+                score: 0.5,
+                completeness: 0.5,
+                source_reliability: 0.5,
+            },
             timestamp: chrono::Utc::now(),
             evidence_items: Vec::new(),
         }

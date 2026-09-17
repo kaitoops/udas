@@ -351,11 +351,7 @@ mod tests {
     fn user_commands_matching_with_workspace() {
         let tmp = TempDir::new().unwrap();
         let ws = tmp.path();
-        write_command(
-            &ws.join(".udas").join("commands"),
-            "project-cmd",
-            "body",
-        );
+        write_command(&ws.join(".udas").join("commands"), "project-cmd", "body");
 
         let matches = user_commands_matching("project", Some(ws));
         assert!(

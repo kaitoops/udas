@@ -21,8 +21,8 @@
 //!   -> loop until client disconnects
 //! ```
 
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Instant;
 
 use anyhow::Result;
@@ -34,10 +34,10 @@ use udas_embedding::{Embedder, RuntimeEmbedder};
 use crate::config::ServerConfig;
 use crate::framing::{read_request, write_response};
 use crate::protocol::{
-    error_code, method, EmbedBatchParams, EmbedParams, InfoResult, Request, Response,
-    ResponseResult,
+    EmbedBatchParams, EmbedParams, InfoResult, Request, Response, ResponseResult, error_code,
+    method,
 };
-use crate::transport::{create_transport, BoxStream};
+use crate::transport::{BoxStream, create_transport};
 
 /// Embedding service server.
 ///
@@ -211,7 +211,14 @@ async fn handle_connection(
             }
         };
 
-        let response = dispatch(&request, &embedder, &requests_served, start_time, &model_dir).await;
+        let response = dispatch(
+            &request,
+            &embedder,
+            &requests_served,
+            start_time,
+            &model_dir,
+        )
+        .await;
 
         if let Err(e) = write_response(&mut stream, &response).await {
             warn!(error = %e, "Failed to write response, closing connection");

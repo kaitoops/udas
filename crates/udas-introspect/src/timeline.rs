@@ -25,9 +25,9 @@
 //! evt-003: "Further correction: both files were involved" → corrects evt-002
 //! ```
 
-use std::path::{Path, PathBuf};
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
+use std::path::{Path, PathBuf};
 
 /// Kind of timeline event.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -159,8 +159,7 @@ impl TimelineLogger {
         let id = format!("evt-{:04}", self.counter);
         entry.id = id.clone();
 
-        let json = serde_json::to_string(&entry)
-            .context("failed to serialize timeline entry")?;
+        let json = serde_json::to_string(&entry).context("failed to serialize timeline entry")?;
 
         // Append to file (create if not exists)
         let mut file = std::fs::OpenOptions::new()
@@ -173,11 +172,7 @@ impl TimelineLogger {
         writeln!(file, "{json}")
             .with_context(|| format!("failed to write timeline: {}", self.log_path.display()))?;
 
-        tracing::debug!(
-            "timeline entry appended: {} ({})",
-            id,
-            entry.description
-        );
+        tracing::debug!("timeline entry appended: {} ({})", id, entry.description);
 
         Ok(id)
     }
@@ -264,10 +259,8 @@ mod tests {
 
     #[test]
     fn test_entry_creation() {
-        let entry = TimelineEntry::new(
-            TimelineEntryKind::CslClassified,
-            "Added pub fn new_feature",
-        );
+        let entry =
+            TimelineEntry::new(TimelineEntryKind::CslClassified, "Added pub fn new_feature");
         assert_eq!(entry.kind, TimelineEntryKind::CslClassified);
         assert_eq!(entry.description, "Added pub fn new_feature");
         assert!(entry.correction_for.is_none());
@@ -275,11 +268,8 @@ mod tests {
 
     #[test]
     fn test_entry_with_csl_level() {
-        let entry = TimelineEntry::new(
-            TimelineEntryKind::CslClassified,
-            "test",
-        )
-        .with_csl_level("CSL-2");
+        let entry =
+            TimelineEntry::new(TimelineEntryKind::CslClassified, "test").with_csl_level("CSL-2");
         assert_eq!(entry.csl_level.as_deref(), Some("CSL-2"));
     }
 
@@ -301,10 +291,7 @@ mod tests {
             ))
             .unwrap();
         let id2 = logger
-            .append(TimelineEntry::new(
-                TimelineEntryKind::Note,
-                "second entry",
-            ))
+            .append(TimelineEntry::new(TimelineEntryKind::Note, "second entry"))
             .unwrap();
 
         assert_eq!(id1, "evt-0001");
@@ -322,7 +309,10 @@ mod tests {
     #[test]
     fn test_correction_chain() {
         let temp_dir = std::env::temp_dir();
-        let log_path = temp_dir.join(format!("udas-test-timeline-chain-{}.jsonl", std::process::id()));
+        let log_path = temp_dir.join(format!(
+            "udas-test-timeline-chain-{}.jsonl",
+            std::process::id()
+        ));
 
         let _ = std::fs::remove_file(&log_path);
 
@@ -337,15 +327,19 @@ mod tests {
             .unwrap();
 
         let id2 = logger
-            .append(TimelineEntry::correcting(&id1).with_metadata(serde_json::json!({
-                "corrected_description": "actually a functional change"
-            })))
+            .append(
+                TimelineEntry::correcting(&id1).with_metadata(serde_json::json!({
+                    "corrected_description": "actually a functional change"
+                })),
+            )
             .unwrap();
 
         let id3 = logger
-            .append(TimelineEntry::correcting(&id2).with_metadata(serde_json::json!({
-                "corrected_description": "actually architectural"
-            })))
+            .append(
+                TimelineEntry::correcting(&id2).with_metadata(serde_json::json!({
+                    "corrected_description": "actually architectural"
+                })),
+            )
             .unwrap();
 
         let chain = logger.correction_chain(&id1).unwrap();
@@ -363,7 +357,10 @@ mod tests {
     #[test]
     fn test_read_last() {
         let temp_dir = std::env::temp_dir();
-        let log_path = temp_dir.join(format!("udas-test-timeline-last-{}.jsonl", std::process::id()));
+        let log_path = temp_dir.join(format!(
+            "udas-test-timeline-last-{}.jsonl",
+            std::process::id()
+        ));
 
         let _ = std::fs::remove_file(&log_path);
 
@@ -391,16 +388,25 @@ mod tests {
     #[test]
     fn test_counter_init_from_existing() {
         let temp_dir = std::env::temp_dir();
-        let log_path = temp_dir.join(format!("udas-test-timeline-init-{}.jsonl", std::process::id()));
+        let log_path = temp_dir.join(format!(
+            "udas-test-timeline-init-{}.jsonl",
+            std::process::id()
+        ));
 
         let _ = std::fs::remove_file(&log_path);
 
         // Write some entries
         let mut logger = TimelineLogger::new(&log_path);
         logger.init_counter().unwrap();
-        logger.append(TimelineEntry::new(TimelineEntryKind::Note, "v1")).unwrap();
-        logger.append(TimelineEntry::new(TimelineEntryKind::Note, "v2")).unwrap();
-        logger.append(TimelineEntry::new(TimelineEntryKind::Note, "v3")).unwrap();
+        logger
+            .append(TimelineEntry::new(TimelineEntryKind::Note, "v1"))
+            .unwrap();
+        logger
+            .append(TimelineEntry::new(TimelineEntryKind::Note, "v2"))
+            .unwrap();
+        logger
+            .append(TimelineEntry::new(TimelineEntryKind::Note, "v3"))
+            .unwrap();
 
         // Create new logger and verify counter picks up from existing
         let mut logger2 = TimelineLogger::new(&log_path);
@@ -417,7 +423,10 @@ mod tests {
     #[test]
     fn test_find_corrections() {
         let temp_dir = std::env::temp_dir();
-        let log_path = temp_dir.join(format!("udas-test-timeline-findcorr-{}.jsonl", std::process::id()));
+        let log_path = temp_dir.join(format!(
+            "udas-test-timeline-findcorr-{}.jsonl",
+            std::process::id()
+        ));
 
         let _ = std::fs::remove_file(&log_path);
 
@@ -430,9 +439,7 @@ mod tests {
         let _id2 = logger
             .append(TimelineEntry::new(TimelineEntryKind::Note, "unrelated"))
             .unwrap();
-        let id3 = logger
-            .append(TimelineEntry::correcting(&id1))
-            .unwrap();
+        let id3 = logger.append(TimelineEntry::correcting(&id1)).unwrap();
 
         let corrections = logger.find_corrections(&id1).unwrap();
         assert_eq!(corrections.len(), 1);
