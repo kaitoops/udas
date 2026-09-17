@@ -456,8 +456,6 @@ fn growth_scan_md(rows: &[GrowthCell], recommended: usize, sensitivity: &[usize]
             / tot.get("converge").copied().unwrap_or(1) as f64;
         let dvr = stag.get("diverge").copied().unwrap_or(0) as f64
             / tot.get("diverge").copied().unwrap_or(1) as f64;
-        let bnd = stag.get("boundary").copied().unwrap_or(0) as f64
-            / tot.get("boundary").copied().unwrap_or(1) as f64;
         let sep = dvr - cvr;
         let cvr_n = stag.get("converge").copied().unwrap_or(0);
         let ct = tot.get("converge").copied().unwrap_or(0);

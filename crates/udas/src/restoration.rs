@@ -64,9 +64,6 @@ pub fn select_key(angle: &Angle) -> anyhow::Result<String> {
     })
 }
 
-/// Required fields for a complete evidence ledger.
-const REQUIRED_FIELDS: &[&str] = &["source", "content", "relevance_score", "timestamp"];
-
 /// Step 4: Verify evidence ledger field completeness.
 ///
 /// Checks that every EvidenceItem has all required fields populated.

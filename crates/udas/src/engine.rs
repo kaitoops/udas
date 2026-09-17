@@ -1125,7 +1125,6 @@ mod tests {
         let resolution = engine.resolve_contradictions("test").await.unwrap();
 
         // Should return a valid result regardless of whether destructive points exist
-        assert!(resolution.destructive_points_found >= 0);
         assert!(resolution.supplementary_measurements <= 3);
     }
 

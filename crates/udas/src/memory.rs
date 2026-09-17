@@ -107,7 +107,7 @@ pub fn load_ledgers(json: &str) -> anyhow::Result<Vec<EvidenceLedger>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::types::{Confidence, EvidenceItem};
+    use crate::types::Confidence;
 
     fn dummy_ledger(angle_deg: f64) -> EvidenceLedger {
         EvidenceLedger {

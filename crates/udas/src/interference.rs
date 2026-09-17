@@ -1646,7 +1646,7 @@ mod tests {
             Some(std::f64::consts::FRAC_PI_2), // 90° phase
         );
 
-        let (im_mag, total_mag, should_supp) =
+        let (im_mag, _total_mag, should_supp) =
             detect_imaginary_probability(&field, &Angle::from_degrees(90.0), 0.1);
         // ψ = 1 + i → Im/|ψ| = 1/√2 ≈ 0.707 > 0.1
         assert!(

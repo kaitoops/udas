@@ -201,7 +201,7 @@ mod tests {
     }
 
     #[test]
-    fn transit_threshold_decreases_with_N() {
+    fn transit_threshold_decreases_with_n() {
         let field = DensityField::new();
         let t5 = transit_threshold(&field); // N=0, N_diff = max(-5,1) → actually let me check
         // Wait — field.kernels.len() = 0 when freshly created.
