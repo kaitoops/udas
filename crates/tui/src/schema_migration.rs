@@ -195,16 +195,8 @@ pub fn backup_before_migrate(path: &Path, domain: &str) -> PathBuf {
 
 /// Per-domain migration registrations.
 ///
-/// Each persistence type below points at the same `CURRENT_*` constant
-/// the original module already gates on. The `MIGRATIONS` list is empty
-/// today because no schema bumps have shipped yet — but the framework is
-/// in place so the next bump only needs to:
-///
-/// 1. Add a `migrate_<domain>_v<N>_to_v<N+1>` function in this module.
-/// 2. Append it to the matching `MIGRATIONS` list.
-/// 3. Bump `CURRENT_VERSION` to match.
-/// 4. Wire `<Domain>Migration::migrate(...)` into the load function in
-///    the owning module.
+/// Downstream domains wire these into their load sites as schema v2 ships.
+#[allow(dead_code)]
 pub mod registry {
     use super::{MigrationFn, SchemaMigration};
 

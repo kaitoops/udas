@@ -8,6 +8,7 @@
 //! Phase 1 (current): Coordinator + Generator minimum viable chain.
 //! Phase 2: Evaluator contract review + output validation.
 //! Phase 3: Full three-agent closed loop with gated pipeline.
+#![allow(dead_code)] // staged scaffolding; wired into the app in later phases
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -38,7 +39,7 @@ pub fn harness_root() -> &'static PathBuf {
         if let Some(home) = dirs::home_dir() {
             let wb = home.join("WorkBuddy");
             if wb.is_dir() {
-                if let Ok(mut entries) = std::fs::read_dir(&wb) {
+                if let Ok(entries) = std::fs::read_dir(&wb) {
                     let mut candidates: Vec<PathBuf> = entries
                         .filter_map(|e| e.ok())
                         .map(|e| e.path())
