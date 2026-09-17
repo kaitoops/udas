@@ -84,10 +84,10 @@ impl DimensionProjector {
             // Matrix multiply: output = matrix × input
             // matrix is output_dim × input_dim, stored row-major
             let mut output = vec![0.0f64; self.output_dim];
-            for i in 0..self.output_dim {
+            for (i, out_i) in output.iter_mut().enumerate().take(self.output_dim) {
                 let row_start = i * self.input_dim;
-                for j in 0..self.input_dim {
-                    output[i] += self.matrix[row_start + j] * embedding[j];
+                for (j, v) in embedding.iter().enumerate().take(self.input_dim) {
+                    *out_i += self.matrix[row_start + j] * v;
                 }
             }
             // Re-normalize after projection (JL projection doesn't preserve norms)

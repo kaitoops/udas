@@ -100,7 +100,7 @@ impl BgeSmallEmbedder {
         // ort 2.0: try_extract_tensor returns (&Shape, &[T])
         let output_value = &outputs["last_hidden_state"];
         let (shape, hidden_data) = output_value.try_extract_tensor::<f32>()?;
-        let shape_ref: &[i64] = &**shape;
+        let shape_ref = shape;
         let (s_len, h_dim) = (shape_ref[1] as usize, shape_ref[2] as usize);
 
         let attention_mask_i64: Vec<i64> = attention_mask.iter().map(|&v| v as i64).collect();
