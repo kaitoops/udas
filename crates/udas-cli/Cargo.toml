@@ -1,0 +1,26 @@
+[package]
+name = "udas-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "UDAS CLI — LLM-free pure math computation tool for interference-driven collapse"
+
+[features]
+default = []
+ort-backend = ["udas-embedding/ort-backend", "deepseek-udas/ort-backend"]
+
+[dependencies]
+deepseek-udas = { path = "../udas", version = "0.8.39" }
+udas-embedding = { path = "../udas-embedding", version = "0.8.39" }
+udas-embed-service = { path = "../udas-embed-service", version = "0.8.39" }
+udas-introspect = { path = "../udas-introspect", version = "0.8.39" }
+anyhow.workspace = true
+async-trait.workspace = true
+clap = { workspace = true, features = ["derive"] }
+dirs.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true }
+tracing.workspace = true
+tracing-subscriber.workspace = true

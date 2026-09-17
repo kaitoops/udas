@@ -1,0 +1,23 @@
+[package]
+name = "deepseek-udas"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "UDAS (Unitary Disk Active Search) — emergent disk coordinate system, final collapse via low-precision gradient descent, and adaptive precision control"
+
+[features]
+default = []
+ort-backend = ["udas-embedding/ort-backend"]
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+udas-embedding = { path = "../udas-embedding", version = "0.8.39" }
+
+[dev-dependencies]
+tokio = { workspace = true }
+udas-embedding = { path = "../udas-embedding", version = "0.8.39", features = ["ort-backend"] }

@@ -1,0 +1,181 @@
+{
+  "cells": [
+    {
+      "category": "converge",
+      "final_cr": 14.714965599215846,
+      "last_path": "NormalSearch",
+      "qid": "Q01",
+      "rounds": 5,
+      "stagnation_detected": false
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4626282123468988,
+      "last_path": "Stagnation",
+      "qid": "Q02",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4621794171861224,
+      "last_path": "Stagnation",
+      "qid": "Q03",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4625930917062915,
+      "last_path": "Stagnation",
+      "qid": "Q04",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4625859360585576,
+      "last_path": "Stagnation",
+      "qid": "Q05",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4624689847842722,
+      "last_path": "Stagnation",
+      "qid": "Q06",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.462615316436465,
+      "last_path": "Stagnation",
+      "qid": "Q07",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "converge",
+      "final_cr": 14.727453600630072,
+      "last_path": "NormalSearch",
+      "qid": "Q08",
+      "rounds": 5,
+      "stagnation_detected": false
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6918853406657366,
+      "last_path": "Stagnation",
+      "qid": "D01",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6947493740597384,
+      "last_path": "Stagnation",
+      "qid": "D02",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.69200277311889,
+      "last_path": "Stagnation",
+      "qid": "D03",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6925956201874361,
+      "last_path": "Stagnation",
+      "qid": "D04",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6934160832909084,
+      "last_path": "Stagnation",
+      "qid": "D05",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.69814052162649,
+      "last_path": "Stagnation",
+      "qid": "D06",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6931013402024584,
+      "last_path": "Stagnation",
+      "qid": "D07",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6939828585924275,
+      "last_path": "Stagnation",
+      "qid": "D08",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0376300418996125,
+      "last_path": "Stagnation",
+      "qid": "B01",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0381837144660717,
+      "last_path": "Stagnation",
+      "qid": "B02",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0369270577467293,
+      "last_path": "Stagnation",
+      "qid": "B03",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0387529432459617,
+      "last_path": "Stagnation",
+      "qid": "B04",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0379322235587054,
+      "last_path": "Stagnation",
+      "qid": "B05",
+      "rounds": 20,
+      "stagnation_detected": true
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0380228543772103,
+      "last_path": "Stagnation",
+      "qid": "B06",
+      "rounds": 20,
+      "stagnation_detected": true
+    }
+  ],
+  "window": 3
+}

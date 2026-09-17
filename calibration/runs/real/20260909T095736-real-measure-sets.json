@@ -1,0 +1,49 @@
+{
+  "purpose": "W3.4 real measurement-set calibration (GPU re-embed, anchor direction)",
+  "results": [
+    {
+      "collapse_angle_deg": 350.0,
+      "confidence": 13.221917549964123,
+      "delta_deg": 62.0,
+      "embedder": "bge-m3",
+      "final_cr": 1.1973240702904635,
+      "method": "NaturalConvergence",
+      "passed": false,
+      "rounds": 5,
+      "set_id": "T2.1",
+      "target_angle_deg": 288.0,
+      "tolerance_deg": 40.0,
+      "transitioned": false
+    },
+    {
+      "collapse_angle_deg": 300.0,
+      "confidence": 26.46980670736273,
+      "delta_deg": 12.0,
+      "embedder": "bge-m3",
+      "final_cr": 1.4557056239491122,
+      "method": "NaturalConvergence",
+      "passed": true,
+      "rounds": 8,
+      "set_id": "T3.2-A3",
+      "target_angle_deg": 288.0,
+      "tolerance_deg": 40.0,
+      "transitioned": false
+    },
+    {
+      "collapse_angle_deg": 180.0,
+      "confidence": 3.1507869098581134,
+      "delta_deg": 90.0,
+      "embedder": "bge-m3",
+      "final_cr": 1.0245547922597684,
+      "method": "NaturalConvergence",
+      "passed": false,
+      "rounds": 3,
+      "set_id": "T3.2-A2",
+      "target_angle_deg": 270.0,
+      "tolerance_deg": 40.0,
+      "transitioned": false
+    }
+  ],
+  "timestamp": "20260909T095736",
+  "tolerance_deg": 40.0
+}

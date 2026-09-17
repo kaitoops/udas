@@ -1,0 +1,96 @@
+{
+  "category": "boundary",
+  "cr_series": [
+    [
+      3,
+      1.169255028033571,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.1448851284825305,
+      "NormalSearch"
+    ],
+    [
+      5,
+      1.2633242998510008,
+      "NormalSearch"
+    ],
+    [
+      6,
+      1.2623782652715543,
+      "Stagnation"
+    ],
+    [
+      7,
+      1.25065792505556,
+      "Stagnation"
+    ],
+    [
+      8,
+      1.3507061145185,
+      "Stagnation"
+    ],
+    [
+      9,
+      1.3090979859369136,
+      "Stagnation"
+    ],
+    [
+      10,
+      1.2406748765150764,
+      "Stagnation"
+    ],
+    [
+      11,
+      1.2131046302847825,
+      "Stagnation"
+    ],
+    [
+      12,
+      1.1243406058790426,
+      "Stagnation"
+    ],
+    [
+      13,
+      1.1081107164687118,
+      "Stagnation"
+    ],
+    [
+      14,
+      1.0293744486041352,
+      "Stagnation"
+    ],
+    [
+      15,
+      1.0999175127880356,
+      "Stagnation"
+    ],
+    [
+      16,
+      1.0143604765925491,
+      "Stagnation"
+    ],
+    [
+      17,
+      1.0805776820834565,
+      "Stagnation"
+    ],
+    [
+      18,
+      1.0916499571986935,
+      "Stagnation"
+    ],
+    [
+      19,
+      1.0369270577467293,
+      "Stagnation"
+    ]
+  ],
+  "embeder_backend": "bge-m3",
+  "expected_outcome": "ambiguous",
+  "final_cr": 1.0369270577467293,
+  "outcome": "run_ok",
+  "question_id": "B03",
+  "rounds": 20
+}

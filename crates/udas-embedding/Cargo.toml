@@ -1,0 +1,26 @@
+[package]
+name = "udas-embedding"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Embedding layer for UDAS 鈥?Embedder trait, FNV hash, BGE-M3, dimension projector"
+
+[features]
+default = []
+ort-backend = ["dep:ort", "dep:tokenizers", "dep:ndarray"]
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+dirs = "6.0.0"
+sha2.workspace = true
+tracing.workspace = true
+tokio = { workspace = true }
+
+ort = { version = "2.0.0-rc", features = ["cuda", "ndarray"], optional = true }
+tokenizers = { version = "0.20", optional = true, default-features = false, features = ["unstable_wasm", "progressbar"] }
+ndarray = { version = "0.17", optional = true }
+
+[dev-dependencies]
+tempfile = "3.16"

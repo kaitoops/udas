@@ -1,0 +1,14 @@
+{
+  "task_id": "T-001",
+  "objective": "在 C:\v4pro 项目根目录创建一个 MARKDOWN_ARCHITECTURE.md 文件。分析项目结构，总结出核心模块分层（tui, core, tools, config 等），用 Mermaid 图画出模块依赖关系。",
+  "type": "docs",
+  "tools_allowed": ["read_file", "list_dir", "file_search", "grep_files", "write_file"],
+  "max_steps": 20,
+  "acceptance_criteria": [
+    "文件存在于 C:\v4pro\MARKDOWN_ARCHITECTURE.md",
+    "包含 Mermaid 架构图",
+    "列出至少 5 个核心 crate 及其职责"
+  ],
+  "status": "draft",
+  "negotiation_round": 0
+}

@@ -1,0 +1,21 @@
+{
+  "category": "converge",
+  "cr_series": [
+    [
+      3,
+      6.6413353225119325,
+      "NormalSearch"
+    ],
+    [
+      4,
+      14.714965599215846,
+      "NormalSearch"
+    ]
+  ],
+  "embeder_backend": "bge-m3",
+  "expected_outcome": "converge",
+  "final_cr": 14.714965599215846,
+  "outcome": "run_ok",
+  "question_id": "Q01",
+  "rounds": 5
+}

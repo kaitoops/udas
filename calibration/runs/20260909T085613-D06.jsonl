@@ -1,0 +1,61 @@
+{
+  "category": "diverge",
+  "cr_series": [
+    [
+      3,
+      1.2362329893646609,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.4451971864026698,
+      "NormalSearch"
+    ],
+    [
+      5,
+      1.5807425010240046,
+      "NormalSearch"
+    ],
+    [
+      6,
+      1.7910389297047813,
+      "Stagnation"
+    ],
+    [
+      7,
+      2.162810777994586,
+      "Stagnation"
+    ],
+    [
+      8,
+      2.3869529070524043,
+      "Stagnation"
+    ],
+    [
+      9,
+      2.852720067192298,
+      "Stagnation"
+    ],
+    [
+      10,
+      3.4146415078356807,
+      "Stagnation"
+    ],
+    [
+      11,
+      3.814785466589571,
+      "Stagnation"
+    ],
+    [
+      12,
+      3.95009579317324,
+      "Stagnation"
+    ]
+  ],
+  "embeder_backend": "bge-m3",
+  "expected_outcome": "stagnate",
+  "final_cr": 3.95009579317324,
+  "outcome": "run_ok",
+  "question_id": "D06",
+  "rounds": 13
+}

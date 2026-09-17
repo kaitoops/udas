@@ -1,0 +1,24 @@
+{
+  "collapse": {
+    "angle_degrees": 210.0,
+    "confidence": 10.484061303410854,
+    "search_efficiency": 0.25,
+    "collapse_method": "NaturalConvergence"
+  },
+  "diagnostics": {
+    "rounds": 5,
+    "transitioned": false,
+    "final_cr": 1.0188277698390729,
+    "peak_angle_degrees": 210.0,
+    "fwhm": 30.0
+  },
+  "contradiction_resolution": {
+    "destructive_points_found": 0,
+    "supplementary_measurements": 0,
+    "peak_before_degrees": 210.0,
+    "peak_after_degrees": 210.0,
+    "shift_degrees": 0.0,
+    "peak_shifted": false,
+    "destructive_point_angles": []
+  }
+}

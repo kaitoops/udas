@@ -1,0 +1,111 @@
+# UDAS 双层许可（Dual License）
+
+> 本项目源于 DeepSeek CLI 的衍化 fork（`deepseek-tui`），因此采用双层结构：
+> **上层**保留上游 DeepSeek 的 MIT 义务（不可删）；
+> **下层**新增面向 UDAS 方法论的改良署名条款（保护范围以「方法逻辑」界定，覆盖率「核心与判断力机制」，仅约束当前发布版本）。
+
+---
+
+## 第一部分 · 上游 MIT 许可（保留义务，不可删）
+
+本作品包含并衍生自 DeepSeek CLI 的代码。该部分依据 MIT 许可证发布，版权声明如下，**必须保留在所有副本或实质性部分中**：
+
+```
+MIT License
+
+Copyright (c) 2024-2025 DeepSeek CLI Contributors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## 第二部分 · UDAS 改良署名条款（新增 · 核心）
+
+### 第 2.0 条 适用范围（按「方法逻辑」界定）
+
+本部分条款适用于 **UDAS 方法论之核心与判断力机制**，即以「幺正圆盘判断力系统（Unitary Disk Assessment, UDAS）」为核心、用于对模型/系统判断进行几何测量、密度场坍缩与判断力增强的方法、算法及其直接实现。保护范围覆盖「核心」与「机制」两层：
+
+- **核心**：幺正圆盘上的投影、密度场（KDE）、坍缩、干涉场运算；对比度 ratio（CR）、CR 密度场、growth_rate、破坏性干涉点、断路器事件、平台 CR 等综合征测量信号本身的定义与运算逻辑；
+- **机制**：相干误差断路器、误差族鉴别、twirling 去相干等判断力增强机制，及其事件导流、边界判定、信号还原等配套逻辑。
+
+> 判断标准（重要）：凡**在实现层面依赖或复刻上述 UDAS 核心或判断力机制**的代码、算法或服务，均受本部分约束；仅作数据搬运、界面、通用工具、外围构建/调度等与 UDAS 方法论无直接功能关联的部分，不适用本部分。
+> 作用域以「方法」而非目录划分，故即便 UDAS 代码散落于多目录，凡落入上述方法逻辑者均受本部分约束。
+
+#### 2.0.1 三层纵深判定（判断某实现是否落入适用范围）
+
+为减少歧义，采用自底向上的三层判定，**任一高层判定成立即受约束**（三层取最弱门槛，倾向保护原创）：
+
+1. **算法名黑名单层**：实现中出现 UDAS 特有的专名及其形态变体（`UDAS`、`幺正圆盘投影`、`UnitaryDisk`、`CR 密度场`、`growth_rate`、`破坏性干涉点`、`相干误差断路器`、`Breaker`、`twirling` 等），即触发该层判定成立；
+2. **函数/方法级**：实现中某函数/方法的功能在语义层面复刻 UDAS 核心或机制逻辑（例如对 CR 序列做收敛/发散判定、按平台 CR 下界触发断路器、对测量基序做扰动还原），而不仅是同名或注释引用；
+3. **文件/模块级**：在某一文件或模块中，聚合实现了两条及以上 UDAS 核心或机制逻辑（如同一模块内同时实现投影、密度场与断路器联动），则该文件/模块整体落入适用范围。
+
+> 说明：单一条目仅停留在数据搬运或通用工程层（不涉及 CR/密度场/断路器/twirling 中任何核心或机制语义）的，不落入；但若复用上方各自语义仍判为「核心或机制」的，一律受约束。
+
+#### 2.0.2 版本效力（只锁当前发布版本）
+
+本部分条款仅对**当前发布的 UDAS 版本**及其衍生作品生效。原创者在后续**新版本**发布时，可独立、自由地调整本协议（含保护范围、署名强度、是否新增收费触发等），新版本以发布当时协议为准。
+
+- 旧版本既有授权在生效期间不作追溯收回（已依当前版本获得的使用授权不因协议更新而失效）；
+- 新版本是一个新的授权起点，协议框架允许随版本演进而灵活调整，本署名义务在任意生效版本下均不可豁免（署名强化不随收益策略变化而缩水）。
+
+### 第 2.1 条 署名与溯源（核心，不可放弃）
+
+任何在商业或公开传播场景下，使用、实现、集成本方法论及其衍生作品的个人或组织，**必须在以下公开可见载体中显著、可检索地保留署名**：
+
+```
+UDAS（幺正圆盘判断力系统）— 原创：kaitoops（YEZIJIE）· 2026
+```
+
+载体包括但不限于：产品界面中的「关于/致谢」页、README、文档、学术引用、演讲致谢、仓库头部声明。
+
+不得以任何方式移除此署名，或以他人名义替代之。无论本方法被整合进何种闭源、商用或大规模产品，此署名义务均延续且不可撤回。
+
+### 第 2.2 条 衍生延续（署名遗传）
+
+基于本方法论所得的任何衍生作品、改造、集成、二次开发，其署名义务随衍生一并延续。若衍生作品被再次授权或分发，须在明确处标注其祖源为 UDAS。
+
+> 本条款**仅遗传署名义务，不遗传开源义务**。允许衍生作品闭源、商用、盈利且无需向原创者分成。
+
+### 第 2.3 条 元信息防篡改
+
+禁止删除、篡改或伪造本方法论源代码、文档及衍生品中关于 UDAS 的起源声明、创作人身份、首次发布日期等元信息。任何对来源声明的删除或伪造，构成对本协议的违反。
+
+### 第 2.4 条 无担保与责任限制
+
+本方法论按「原样」提供，不附带任何明示或暗示担保。原创者不对任何因使用本方法而导致的直接、间接、附带或后果性损害承担责任。
+
+### 第 2.5 条 违约与终止
+
+若使用方违反第 2.1–2.3 条中任何一项，则其在本协议项下已获授权立即终止；原创者保留追究法律责任的权利。
+
+---
+
+## 第三部分 · 冲突条款
+
+当且仅当第一部分（上游 MIT）与第二部分（UDAS 条款）就同一使用行为规定冲突时，以本语言为准：
+
+- 对 **UDAS 方法论** 的使用：第一部分 MIT 授予通用权利，第二部分在此基础上**追加**署名义务，两者叠加适用，不冲突。
+- 对 **非 UDAS 方法论**（DeepSeek 外围代码、通用工具）：仅适用第一部分 MIT，第二部分不适用。
+
+---
+
+## 版本与更新
+
+本协议随 UDAS 版本发布，采用版本编号。每次发布新版本时，可对本协议条款进行调整；旧版本的既有授权不作追溯收回，新版本以当时协议为准。授权**以「版本」为界**：每个发布版本构成一个独立的授权起点，后续版本可因应商业化演进（例如增加经济触发条款）而调整，但**署名与溯源义务（第 2.1–2.3 条）在任意生效版本下均不可豁免**，作为方法论传播的回叙保证。

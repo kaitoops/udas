@@ -1,0 +1,7 @@
+[1m[36m═══ Agent Display: test-agent ═══[0m
+
+[STATUS] test
+
+[1m[32m═══ Agent test-agent done 
+ ═══[0m
+[2m(Read-only display complete. Close this window or press Ctrl+C to exit.)[0m

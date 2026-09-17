@@ -1,0 +1,1 @@
+{"_schema":"anchoring-events-v1","description":"人类导频对断路器升级的响应（采纳/拒绝/修正），append-only","fields":["timestamp","question_id","decision","note"]}

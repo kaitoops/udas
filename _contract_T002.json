@@ -1,0 +1,19 @@
+{
+  "task_id": "T-002-C",
+  "objective": "修复 solar_system.html 中行星纹理导致的黑色球体问题，给每个行星加上程序生成的有色条纹纹理",
+  "type": "code",
+  "tools_allowed": ["read_file", "write_file", "edit_file", "exec_shell"],
+  "max_steps": 15,
+  "acceptance_criteria": [
+    "所有行星显示为有色球体，不是黑色",
+    "每个行星表面至少有 2 条不同颜色的条纹或色带",
+    "土星保持其星环不变",
+    "太阳保持原本的发光效果不变",
+    "在浏览器中打开时无 JavaScript 控制台错误"
+  ],
+  "status": "draft",
+  "negotiation_round": 1,
+  "deliverables": {
+    "html": "C:\\v4pro\\solar_system.html"
+  }
+}

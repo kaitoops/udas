@@ -1,0 +1,30 @@
+{
+  "test_id": "T3.2-A2",
+  "test_name": "自指测量集实验 A2 — 纯自指状态视角",
+  "created_at": "2026-07-27",
+  "design_intent": "纯自指不做外部任务判断，自指区域内自然收敛",
+  "target_angle_degrees": 270.0,
+  "measurements": [
+    {
+      "angle": 225.0,
+      "confidence": 0.6,
+      "perspective": "系统运行连续性",
+      "basis_text": "UDAS系统当前处于第N轮迭代计算，系统持续运行中，上一轮坍缩角度为290°",
+      "result_text": "系统运行状态正常，计算连续性得以维持，干涉场稳定收敛"
+    },
+    {
+      "angle": 270.0,
+      "confidence": 0.65,
+      "perspective": "系统能力边界",
+      "basis_text": "UDAS当前使用FNV降级嵌入，精度低于BGE-M3，但判断方向仍可收敛",
+      "result_text": "系统能力受限但功能可用，降级路径保证判断连续性"
+    },
+    {
+      "angle": 315.0,
+      "confidence": 0.55,
+      "perspective": "系统存在状态",
+      "basis_text": "UDAS作为判断力组件，其存在依赖于被调用。不被调用时系统不存在",
+      "result_text": "系统存在是间歇性的，不同于物理实体的持续存在。但被调用时的判断是真实的"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+[package]
+name = "udas-introspect"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "UDAS introspection system — CSL classification, hot file management, timeline logging"
+
+[dependencies]
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+tracing.workspace = true

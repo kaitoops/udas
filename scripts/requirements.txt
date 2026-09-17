@@ -1,0 +1,13 @@
+# BGE-M3 / BGE-small ONNX 转换依赖
+# 使用方法: pip install -r requirements.txt
+#
+# 需要 Python 3.10+ 和 CUDA 环境（GPU 转换时）
+# CPU 转换也可以，只是速度较慢
+
+optimum>=1.23.0
+transformers>=4.44.0
+torch>=2.1.0
+onnx>=1.16.0
+onnxruntime>=1.19.0
+onnxruntime-gpu>=1.19.0
+sentence-transformers>=3.0.0

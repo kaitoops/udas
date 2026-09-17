@@ -1,0 +1,27 @@
+[package]
+name = "udas-embed-service"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Persistent embedding service for UDAS - IPC server + client SDK"
+
+[features]
+default = ["local-socket"]
+local-socket = ["dep:interprocess"]
+tcp = []
+
+[dependencies]
+udas-embedding = { path = "../udas-embedding" }
+anyhow.workspace = true
+async-trait.workspace = true
+dirs = "6.0.0"
+interprocess = { workspace = true, optional = true }
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+tokio = { workspace = true }

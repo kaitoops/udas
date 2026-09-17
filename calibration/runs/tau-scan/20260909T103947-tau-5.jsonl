@@ -1,0 +1,159 @@
+{
+  "cells": [
+    {
+      "category": "converge",
+      "final_cr": 35.75842279671689,
+      "passed": true,
+      "qid": "Q01",
+      "rounds": 6
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4626282123468988,
+      "passed": true,
+      "qid": "Q02",
+      "rounds": 20
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4621794171861224,
+      "passed": true,
+      "qid": "Q03",
+      "rounds": 20
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4625930917062915,
+      "passed": true,
+      "qid": "Q04",
+      "rounds": 20
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4625859360585576,
+      "passed": true,
+      "qid": "Q05",
+      "rounds": 20
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.4624689847842722,
+      "passed": true,
+      "qid": "Q06",
+      "rounds": 20
+    },
+    {
+      "category": "converge",
+      "final_cr": 3.462615316436465,
+      "passed": true,
+      "qid": "Q07",
+      "rounds": 20
+    },
+    {
+      "category": "converge",
+      "final_cr": 35.798420385232966,
+      "passed": true,
+      "qid": "Q08",
+      "rounds": 6
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6918853406657366,
+      "passed": true,
+      "qid": "D01",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6947493740597384,
+      "passed": true,
+      "qid": "D02",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.69200277311889,
+      "passed": true,
+      "qid": "D03",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6925956201874361,
+      "passed": true,
+      "qid": "D04",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6934160832909084,
+      "passed": true,
+      "qid": "D05",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.69814052162649,
+      "passed": true,
+      "qid": "D06",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6931013402024584,
+      "passed": true,
+      "qid": "D07",
+      "rounds": 20
+    },
+    {
+      "category": "diverge",
+      "final_cr": 1.6939828585924275,
+      "passed": true,
+      "qid": "D08",
+      "rounds": 20
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0376300418996125,
+      "passed": false,
+      "qid": "B01",
+      "rounds": 20
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0381837144660717,
+      "passed": false,
+      "qid": "B02",
+      "rounds": 20
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0369270577467293,
+      "passed": false,
+      "qid": "B03",
+      "rounds": 20
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0387529432459617,
+      "passed": false,
+      "qid": "B04",
+      "rounds": 20
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0379322235587054,
+      "passed": false,
+      "qid": "B05",
+      "rounds": 20
+    },
+    {
+      "category": "boundary",
+      "final_cr": 1.0380228543772103,
+      "passed": false,
+      "qid": "B06",
+      "rounds": 20
+    }
+  ],
+  "tau_base": 5.0
+}

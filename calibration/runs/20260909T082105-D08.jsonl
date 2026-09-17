@@ -1,0 +1,35 @@
+{
+  "category": "diverge",
+  "cr_series": [
+    [
+      3,
+      1.6495491241600353,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.9356796687023334,
+      "NormalSearch"
+    ],
+    [
+      5,
+      2.449524976624209,
+      "NormalSearch"
+    ],
+    [
+      6,
+      3.0899859716596914,
+      "Stagnation"
+    ],
+    [
+      7,
+      3.59451583588645,
+      "Stagnation"
+    ]
+  ],
+  "expected_outcome": "stagnate",
+  "final_cr": 4.859903358804877,
+  "outcome": "run_ok",
+  "question_id": "D08",
+  "rounds": 9
+}

@@ -1,0 +1,91 @@
+{
+  "category": "diverge",
+  "cr_series": [
+    [
+      3,
+      1.2484062547261743,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.5471738336459202,
+      "NormalSearch"
+    ],
+    [
+      5,
+      1.5676120624713359,
+      "NormalSearch"
+    ],
+    [
+      6,
+      1.7551506117047673,
+      "Stagnation"
+    ],
+    [
+      7,
+      1.9209339492774244,
+      "Stagnation"
+    ],
+    [
+      8,
+      2.177593422262104,
+      "Stagnation"
+    ],
+    [
+      9,
+      2.3447666428752916,
+      "Stagnation"
+    ],
+    [
+      10,
+      2.4829751514666656,
+      "Stagnation"
+    ],
+    [
+      11,
+      2.952640668350582,
+      "Stagnation"
+    ],
+    [
+      12,
+      2.9453154357393494,
+      "Stagnation"
+    ],
+    [
+      13,
+      3.357648616174337,
+      "Stagnation"
+    ],
+    [
+      14,
+      2.8468062145945496,
+      "Stagnation"
+    ],
+    [
+      15,
+      2.8631361453024216,
+      "Stagnation"
+    ],
+    [
+      16,
+      3.31779537631035,
+      "Stagnation"
+    ],
+    [
+      17,
+      2.9810005431605284,
+      "Stagnation"
+    ],
+    [
+      18,
+      3.1829846999850524,
+      "Stagnation"
+    ]
+  ],
+  "embeder_backend": "bge-m3",
+  "expected_outcome": "stagnate",
+  "final_cr": 3.5191728156306774,
+  "outcome": "run_ok",
+  "question_id": "D03",
+  "rounds": 20
+}

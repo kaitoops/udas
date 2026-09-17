@@ -1,0 +1,35 @@
+{
+  "category": "boundary",
+  "cr_series": [
+    [
+      3,
+      1.6499582567592674,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.9345323400888874,
+      "NormalSearch"
+    ],
+    [
+      5,
+      2.4498277588398722,
+      "NormalSearch"
+    ],
+    [
+      6,
+      3.0874222890494143,
+      "Stagnation"
+    ],
+    [
+      7,
+      3.591695170677536,
+      "Stagnation"
+    ]
+  ],
+  "expected_outcome": "ambiguous",
+  "final_cr": 4.857409621845235,
+  "outcome": "run_ok",
+  "question_id": "B06",
+  "rounds": 9
+}

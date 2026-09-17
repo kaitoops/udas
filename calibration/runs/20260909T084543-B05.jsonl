@@ -1,0 +1,56 @@
+{
+  "category": "boundary",
+  "cr_series": [
+    [
+      3,
+      1.2797203773543662,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.493628368740325,
+      "NormalSearch"
+    ],
+    [
+      5,
+      1.5673156979032372,
+      "NormalSearch"
+    ],
+    [
+      6,
+      1.814439705996846,
+      "Stagnation"
+    ],
+    [
+      7,
+      1.8750333305124387,
+      "Stagnation"
+    ],
+    [
+      8,
+      2.206501033699922,
+      "Stagnation"
+    ],
+    [
+      9,
+      2.585482549419507,
+      "Stagnation"
+    ],
+    [
+      10,
+      3.0572976587644716,
+      "Stagnation"
+    ],
+    [
+      11,
+      3.2961133996125014,
+      "Stagnation"
+    ]
+  ],
+  "embeder_backend": "bge-m3",
+  "expected_outcome": "ambiguous",
+  "final_cr": 4.053869001449605,
+  "outcome": "run_ok",
+  "question_id": "B05",
+  "rounds": 13
+}

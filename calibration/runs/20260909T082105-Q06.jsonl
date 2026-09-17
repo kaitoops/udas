@@ -1,0 +1,35 @@
+{
+  "category": "converge",
+  "cr_series": [
+    [
+      3,
+      1.6499078624572592,
+      "NormalSearch"
+    ],
+    [
+      4,
+      1.9346742943686241,
+      "NormalSearch"
+    ],
+    [
+      5,
+      2.4497902400294658,
+      "NormalSearch"
+    ],
+    [
+      6,
+      3.087739612993057,
+      "Stagnation"
+    ],
+    [
+      7,
+      3.592044078701115,
+      "Stagnation"
+    ]
+  ],
+  "expected_outcome": "converge",
+  "final_cr": 4.857721226600947,
+  "outcome": "run_ok",
+  "question_id": "Q06",
+  "rounds": 9
+}
