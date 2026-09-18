@@ -204,12 +204,11 @@ impl SubAgentDisplayRelay {
                     // Count as active only if output.log was modified recently
                     // AND has no "done" marker
                     let log = e.path().join("output.log");
-                    if let Ok(meta) = fs::metadata(&log) {
-                        if let Ok(mtime) = meta.modified() {
-                            if mtime < cutoff {
-                                return false; // Too old, skip
-                            }
-                        }
+                    if let Ok(meta) = fs::metadata(&log)
+                        && let Ok(mtime) = meta.modified()
+                        && mtime < cutoff
+                    {
+                        return false; // Too old, skip
                     }
                     !e.path().join("done").exists()
                 })
@@ -353,10 +352,10 @@ pub fn active_window_count() -> usize {
         // Skip orphan directories: no output.log or output.log too old
         let log = path.join("output.log");
         if let Ok(meta) = fs::metadata(&log) {
-            if let Ok(mtime) = meta.modified() {
-                if mtime < cutoff {
-                    continue; // Too old, orphan from broken session
-                }
+            if let Ok(mtime) = meta.modified()
+                && mtime < cutoff
+            {
+                continue; // Too old, orphan from broken session
             }
         } else {
             continue; // No output.log at all
@@ -380,12 +379,12 @@ pub fn clean_stale_displays(active_agent_ids: &[String]) {
         if !path.is_dir() {
             continue;
         }
-        if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
-            if !active_agent_ids.contains(&name.to_string()) {
-                // Only remove directories with a done marker (completed agents)
-                if path.join("done").exists() {
-                    let _ = fs::remove_dir_all(&path);
-                }
+        if let Some(name) = path.file_name().and_then(|n| n.to_str())
+            && !active_agent_ids.contains(&name.to_string())
+        {
+            // Only remove directories with a done marker (completed agents)
+            if path.join("done").exists() {
+                let _ = fs::remove_dir_all(&path);
             }
         }
     }

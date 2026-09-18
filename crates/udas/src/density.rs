@@ -36,6 +36,12 @@ pub struct DensityField {
     pub n_min: usize,
 }
 
+impl Default for DensityField {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl DensityField {
     /// Create a new empty density field with default parameters.
     pub fn new() -> Self {

@@ -61,7 +61,7 @@ impl From<ServiceError> for std::io::Error {
             ServiceError::ConnectionClosed => {
                 std::io::Error::new(std::io::ErrorKind::ConnectionReset, "connection closed")
             }
-            other => std::io::Error::new(std::io::ErrorKind::Other, other.to_string()),
+            other => std::io::Error::other(other.to_string()),
         }
     }
 }

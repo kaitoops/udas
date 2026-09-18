@@ -402,17 +402,15 @@ async fn handle_embed_service(action: EmbedServiceAction) -> Result<()> {
                 )
                 .init();
 
-            let mut config = udas_embed_service::ServerConfig::default();
-
-            // Parse backend mode
-            config.backend = backend
-                .parse()
-                .map_err(|e| anyhow::anyhow!("invalid backend '{backend}': {e}"))?;
-
-            // Parse transport
-            config.transport = transport
-                .parse()
-                .map_err(|e| anyhow::anyhow!("invalid transport '{transport}': {e}"))?;
+            let mut config = udas_embed_service::ServerConfig {
+                backend: backend
+                    .parse()
+                    .map_err(|e| anyhow::anyhow!("invalid backend '{backend}': {e}"))?,
+                transport: transport
+                    .parse()
+                    .map_err(|e| anyhow::anyhow!("invalid transport '{transport}': {e}"))?,
+                ..Default::default()
+            };
 
             // Override model dir if specified
             if let Some(dir) = model_dir {

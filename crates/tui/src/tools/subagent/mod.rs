@@ -2157,10 +2157,10 @@ impl ToolSpec for AgentSpawnTool {
             cmd.env("DEEPSEEK_PROVIDER", "deepseek");
 
             // Forward the parent's API key from environment variable.
-            if let Ok(api_key) = std::env::var("DEEPSEEK_API_KEY") {
-                if !api_key.trim().is_empty() {
-                    cmd.env("DEEPSEEK_API_KEY", &api_key);
-                }
+            if let Ok(api_key) = std::env::var("DEEPSEEK_API_KEY")
+                && !api_key.trim().is_empty()
+            {
+                cmd.env("DEEPSEEK_API_KEY", &api_key);
             }
 
             let output = cmd
@@ -3662,7 +3662,7 @@ async fn run_subagent(
             let event = match stream.next().await {
                 Some(Ok(event)) => event,
                 Some(Err(e)) => {
-                    if let Some(ref r) = relay {
+                    if let Some(r) = relay {
                         r.write_status(&format!("stream error: {e}"));
                     }
                     return Err(e);
@@ -3681,14 +3681,14 @@ async fn run_subagent(
                     ContentBlockStart::Text { text } => {
                         current_block_kind = Some(ContentBlockKind::Text);
                         stream_text.push_str(&text);
-                        if let Some(ref r) = relay {
+                        if let Some(r) = relay {
                             r.write_text_delta(&text);
                         }
                     }
                     ContentBlockStart::Thinking { thinking } => {
                         current_block_kind = Some(ContentBlockKind::Thinking);
                         stream_thinking.push_str(&thinking);
-                        if let Some(ref r) = relay {
+                        if let Some(r) = relay {
                             r.write_thinking_delta(&thinking);
                         }
                     }
@@ -3704,7 +3704,7 @@ async fn run_subagent(
                             initial_input: input.clone(),
                         });
                         current_tool_indices.insert(index, tool_idx);
-                        if let Some(ref r) = relay {
+                        if let Some(r) = relay {
                             r.write_tool_call(&name, steps);
                         }
                     }
@@ -3713,13 +3713,13 @@ async fn run_subagent(
                 StreamEvent::ContentBlockDelta { index, delta } => match delta {
                     Delta::TextDelta { text } => {
                         stream_text.push_str(&text);
-                        if let Some(ref r) = relay {
+                        if let Some(r) = relay {
                             r.write_text_delta(&text);
                         }
                     }
                     Delta::ThinkingDelta { thinking } => {
                         stream_thinking.push_str(&thinking);
-                        if let Some(ref r) = relay {
+                        if let Some(r) = relay {
                             r.write_thinking_delta(&thinking);
                         }
                     }
@@ -3801,7 +3801,7 @@ async fn run_subagent(
         }
 
         // Forward final status to the display relay.
-        if let Some(ref r) = relay {
+        if let Some(r) = relay {
             r.write_status(&format!(
                 "step {steps}/{max_steps}: received model response"
             ));
@@ -3812,13 +3812,13 @@ async fn run_subagent(
         for block in &stream_content {
             match block {
                 ContentBlock::Text { text, .. } if !text.trim().is_empty() => {
-                    if let Some(ref r) = relay {
+                    if let Some(r) = relay {
                         r.write_text(text);
                     }
                     final_result = Some(text.clone());
                 }
                 ContentBlock::Thinking { thinking } if !thinking.trim().is_empty() => {
-                    if let Some(ref r) = relay {
+                    if let Some(r) = relay {
                         r.write_thinking(thinking);
                     }
                 }
@@ -3866,7 +3866,7 @@ async fn run_subagent(
         );
         let mut tool_results: Vec<ContentBlock> = Vec::new();
         for (tool_id, tool_name, tool_input) in tool_uses {
-            if let Some(ref r) = relay {
+            if let Some(r) = relay {
                 r.write_tool_call(&tool_name, steps);
             }
             emit_agent_progress(
@@ -3895,19 +3895,19 @@ async fn run_subagent(
                     // Surface approval-blocking to the display relay so
                     // the external terminal shows a clear status instead
                     // of a cryptic error.
-                    if err_msg.contains("approval") {
-                        if let Some(ref r) = relay {
-                            r.write_status(&format!(
-                                "waiting for approval: tool '{tool_name}' requires user confirmation"
-                            ));
-                        }
+                    if err_msg.contains("approval")
+                        && let Some(r) = relay
+                    {
+                        r.write_status(&format!(
+                            "waiting for approval: tool '{tool_name}' requires user confirmation"
+                        ));
                     }
                     format!("Error: {e}")
                 }
                 Err(_) => format!("Error: Tool {tool_name} timed out"),
             };
             let tool_ok = !result.starts_with("Error:");
-            if let Some(ref r) = relay {
+            if let Some(r) = relay {
                 r.write_tool_result(&tool_name, tool_ok);
             }
             emit_agent_progress(

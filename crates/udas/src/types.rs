@@ -115,27 +115,33 @@ impl Complex {
         self.im.atan2(self.re)
     }
 
-    /// Complex addition.
-    pub fn add(self, other: Self) -> Self {
-        Self {
-            re: self.re + other.re,
-            im: self.im + other.im,
-        }
-    }
-
-    /// Complex multiplication z₁·z₂.
-    pub fn mul(self, other: Self) -> Self {
-        Self {
-            re: self.re * other.re - self.im * other.im,
-            im: self.re * other.im + self.im * other.re,
-        }
-    }
-
     /// Scalar multiplication (real scalar).
     pub fn scale(self, s: f64) -> Self {
         Self {
             re: self.re * s,
             im: self.im * s,
+        }
+    }
+}
+
+impl std::ops::Add for Complex {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            re: self.re + other.re,
+            im: self.im + other.im,
+        }
+    }
+}
+
+impl std::ops::Mul for Complex {
+    type Output = Self;
+
+    fn mul(self, other: Self) -> Self {
+        Self {
+            re: self.re * other.re - self.im * other.im,
+            im: self.re * other.im + self.im * other.re,
         }
     }
 }

@@ -15,18 +15,13 @@ pub const DEFAULT_MODEL_DIR: &str = "C:\\Users\\WIN10\\udas-tui\\models";
 // ─── Transport kind ───
 
 /// Transport type selection.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TransportKind {
     /// interprocess local_socket (Windows named pipe / Unix domain socket).
+    #[default]
     LocalSocket,
     /// TCP loopback (fallback / debugging).
     Tcp,
-}
-
-impl Default for TransportKind {
-    fn default() -> Self {
-        TransportKind::LocalSocket
-    }
 }
 
 impl std::fmt::Display for TransportKind {
@@ -52,9 +47,10 @@ impl std::str::FromStr for TransportKind {
 // ─── Backend mode ───
 
 /// Backend selection mode.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum BackendMode {
     /// Auto-select: GPU BGE-M3 -> CPU BGE-small -> FNV.
+    #[default]
     Auto,
     /// Force BGE-M3 (GPU).
     BgeM3,
@@ -62,12 +58,6 @@ pub enum BackendMode {
     BgeSmall,
     /// Force FNV hash (no model needed, zero-dependency).
     Fnv,
-}
-
-impl Default for BackendMode {
-    fn default() -> Self {
-        BackendMode::Auto
-    }
 }
 
 impl std::fmt::Display for BackendMode {

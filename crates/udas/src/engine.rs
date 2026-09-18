@@ -579,20 +579,21 @@ impl<'a> UdasEngine<'a> {
 
             // Coherent-error breaker (W5). If A(stalled) ∧ B(low plateau) holds,
             // stop prematurely and escalate to a human instead of collapsing.
-            if let Some(br) = &mut self.breaker {
-                if br.evaluate(sample_cr, &action.growth_path) == TripStatus::Tripped {
-                    self.breaker_event = Some(BreakerEvent {
-                        question_id: None,
-                        reason: "coherent_error_stagnation_low_plateau".to_string(),
-                        rounds: round,
-                        growth_rate: self.precision.growth_tracker.growth_rate(),
-                        window: self.precision.growth_tracker.window,
-                        plateau_cr_median: br.last_plateau_median(),
-                        plateau_floor: crate::breaker::DEFAULT_PLATEAU_FLOOR,
-                        final_cr: sample_cr,
-                    });
-                    break;
-                }
+            if let Some(br) = &mut self.breaker
+                && br.evaluate(sample_cr, &action.growth_path) == TripStatus::Tripped
+            {
+                self.breaker_event = Some(BreakerEvent {
+                    question_id: None,
+                    reason: "coherent_error_stagnation_low_plateau".to_string(),
+                    rounds: round,
+                    growth_rate: self.precision.growth_tracker.growth_rate(),
+                    window: self.precision.growth_tracker.window,
+                    plateau_cr_median: br.last_plateau_median(),
+                    plateau_floor: crate::breaker::DEFAULT_PLATEAU_FLOOR,
+                    final_cr: sample_cr,
+                });
+
+                break;
             }
 
             if action.should_transition {

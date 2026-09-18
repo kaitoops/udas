@@ -551,10 +551,12 @@ diff --git a/src/lib.rs b/src/lib.rs
 
     #[test]
     fn test_change_features_summary() {
-        let mut f = ChangeFeatures::default();
-        f.files_changed = 3;
-        f.lines_added = 50;
-        f.lines_removed = 10;
+        let mut f = ChangeFeatures {
+            files_changed: 3,
+            lines_added: 50,
+            lines_removed: 10,
+            ..Default::default()
+        };
         f.pub_fns_added.push("pub fn new".into());
         f.deps_added.push("udas-introspect".into());
         let s = f.summary();

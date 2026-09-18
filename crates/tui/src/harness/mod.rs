@@ -38,23 +38,23 @@ pub fn harness_root() -> &'static PathBuf {
         // Walk ~/WorkBuddy/ for the latest dated subdirectory
         if let Some(home) = dirs::home_dir() {
             let wb = home.join("WorkBuddy");
-            if wb.is_dir() {
-                if let Ok(entries) = std::fs::read_dir(&wb) {
-                    let mut candidates: Vec<PathBuf> = entries
-                        .filter_map(|e| e.ok())
-                        .map(|e| e.path())
-                        .filter(|p| {
-                            p.is_dir()
-                                && p.join("_dot-workbuddy-core")
-                                    .join("harness-system")
-                                    .join("harness")
-                                    .is_dir()
-                        })
-                        .collect();
-                    candidates.sort();
-                    if let Some(latest) = candidates.last() {
-                        return latest.join("_dot-workbuddy-core/harness-system/harness");
-                    }
+            if wb.is_dir()
+                && let Ok(entries) = std::fs::read_dir(&wb)
+            {
+                let mut candidates: Vec<PathBuf> = entries
+                    .filter_map(|e| e.ok())
+                    .map(|e| e.path())
+                    .filter(|p| {
+                        p.is_dir()
+                            && p.join("_dot-workbuddy-core")
+                                .join("harness-system")
+                                .join("harness")
+                                .is_dir()
+                    })
+                    .collect();
+                candidates.sort();
+                if let Some(latest) = candidates.last() {
+                    return latest.join("_dot-workbuddy-core/harness-system/harness");
                 }
             }
         }

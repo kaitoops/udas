@@ -299,10 +299,7 @@ mod tests {
     async fn test_tcp_transport_connect_listen() {
         use std::time::Duration;
 
-        // Bind to ephemeral port.
-        let server_transport = tcp::TcpTransport::new("127.0.0.1:0");
-        // TcpListener::bind with :0 assigns a port, but we need to know it.
-        // Use a fixed port unlikely to be in use.
+        // Bind to a fixed port unlikely to be in use.
         let addr = "127.0.0.1:19473";
         let server_transport = tcp::TcpTransport::new(addr);
 

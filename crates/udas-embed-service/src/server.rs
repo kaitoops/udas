@@ -179,10 +179,10 @@ impl EmbedServer {
     }
 
     fn remove_pid_file(&self) {
-        if self.config.pid_file.exists() {
-            if let Err(e) = std::fs::remove_file(&self.config.pid_file) {
-                warn!(error = %e, "Failed to remove PID file");
-            }
+        if self.config.pid_file.exists()
+            && let Err(e) = std::fs::remove_file(&self.config.pid_file)
+        {
+            warn!(error = %e, "Failed to remove PID file");
         }
     }
 }
@@ -336,7 +336,7 @@ mod tests {
         let config = ServerConfig::default();
         let server = EmbedServer::new(config).unwrap();
         let info = server.info();
-        assert!(info.uptime_secs == 0 || info.uptime_secs > 0);
+
         assert_eq!(info.requests_served, 0);
         assert!(info.backend.contains("fnv"));
     }

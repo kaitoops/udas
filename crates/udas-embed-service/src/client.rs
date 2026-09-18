@@ -151,10 +151,10 @@ impl EmbedClient {
             .map_err(|_| ServiceError::Timeout(self.config.request_timeout))??;
 
         // Check for RPC error
-        if resp.is_error() {
-            if let Some(ref err) = resp.error {
-                anyhow::bail!("server error [{}]: {}", err.code, err.message);
-            }
+        if resp.is_error()
+            && let Some(ref err) = resp.error
+        {
+            anyhow::bail!("server error [{}]: {}", err.code, err.message);
         }
 
         Ok(resp)
@@ -242,10 +242,12 @@ mod tests {
     #[tokio::test]
     async fn test_client_connect_failure() {
         // Connecting to a non-existent server should fail
-        let mut config = ClientConfig::default();
-        config.connect_timeout = Duration::from_millis(100);
-        // Use a name that won't have a server listening
-        config.local_socket_name = "udas-embed-test-nonexistent".to_string();
+        let config = ClientConfig {
+            connect_timeout: Duration::from_millis(100),
+            // Use a name that won't have a server listening
+            local_socket_name: "udas-embed-test-nonexistent".to_string(),
+            ..Default::default()
+        };
 
         let result = EmbedClient::connect(config).await;
         assert!(
@@ -256,9 +258,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_remote_embedder_connect_failure() {
-        let mut config = ClientConfig::default();
-        config.connect_timeout = Duration::from_millis(100);
-        config.local_socket_name = "udas-embed-test-nonexistent-2".to_string();
+        let config = ClientConfig {
+            connect_timeout: Duration::from_millis(100),
+            local_socket_name: "udas-embed-test-nonexistent-2".to_string(),
+            ..Default::default()
+        };
 
         let result = RemoteEmbedder::connect(config).await;
         assert!(result.is_err());

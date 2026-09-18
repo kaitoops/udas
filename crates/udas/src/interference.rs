@@ -141,7 +141,7 @@ impl InterferenceField {
         let sigma = variance.sqrt();
         self.bandwidth = 1.06 * sigma * n.powf(-0.2);
         // Clamp to sane range
-        self.bandwidth = self.bandwidth.max(5.0).min(120.0);
+        self.bandwidth = self.bandwidth.clamp(5.0, 120.0);
     }
 
     /// Number of measurements stored.
@@ -353,7 +353,7 @@ pub fn evaluate_complex_amplitude(field: &InterferenceField, theta: &Angle) -> C
         let kernel = gaussian_kernel(diff, h);
         let phi = m.phase.unwrap_or(0.0);
         let amplitude = Complex::from_polar(m.confidence.sqrt(), phi);
-        psi = psi.add(amplitude.scale(kernel));
+        psi = psi + amplitude.scale(kernel);
     }
 
     psi
@@ -1233,7 +1233,7 @@ mod tests {
             emb(&[1.0, 0.0]),
         );
         let fwhm = compute_fwhm(&field, &Angle::from_degrees(180.0), 10.0, 30.0);
-        assert!(fwhm >= 10.0 && fwhm <= 180.0);
+        assert!((10.0..=180.0).contains(&fwhm));
     }
 
     #[test]
@@ -1475,11 +1475,11 @@ mod tests {
 
         let z3 = Complex::new(1.0, 2.0);
         let z4 = Complex::new(3.0, 4.0);
-        let sum = z3.add(z4);
+        let sum = z3 + z4;
         assert!((sum.re - 4.0).abs() < 1e-9);
         assert!((sum.im - 6.0).abs() < 1e-9);
 
-        let prod = z3.mul(z4);
+        let prod = z3 * z4;
         // (1+2i)(3+4i) = 3+4i+6i+8i² = 3-8+10i = -5+10i
         assert!((prod.re - (-5.0)).abs() < 1e-9);
         assert!((prod.im - 10.0).abs() < 1e-9);

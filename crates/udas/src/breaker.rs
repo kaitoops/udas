@@ -102,6 +102,12 @@ pub struct CircuitBreaker {
     tripped: bool,
 }
 
+impl Default for CircuitBreaker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl CircuitBreaker {
     /// Create the breaker with the shipped defaults (floor 2.5, w_trigger 3,
     /// window 3). Injecting non-defaults never mutates the defaults.

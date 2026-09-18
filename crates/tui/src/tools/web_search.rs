@@ -548,13 +548,12 @@ impl WebSearchTool {
         context: &ToolContext,
     ) -> Result<ToolResult, ToolError> {
         // Try Tavily first if API key is available
-        if context.search_api_key.is_some() {
-            if let Ok(result) = self
+        if context.search_api_key.is_some()
+            && let Ok(result) = self
                 .run_tavily_search(query, max_results, timeout_ms, context)
                 .await
-            {
-                return Ok(result);
-            }
+        {
+            return Ok(result);
         }
 
         // Fallback to multi-engine HTML scraping
@@ -570,7 +569,12 @@ impl WebSearchTool {
         let encoded = url_encode(query);
 
         // Engine order: domestic first (always available in China), then international
-        let engines: Vec<(&str, &str, fn(&str, usize) -> Vec<WebSearchEntry>)> = vec![
+        type EngineSpec = (
+            &'static str,
+            &'static str,
+            fn(&str, usize) -> Vec<WebSearchEntry>,
+        );
+        let engines: Vec<EngineSpec> = vec![
             ("baidu", BAIDU_HOST, parse_baidu_results),
             ("sogou", SOGOU_HOST, parse_sogou_results),
             ("so", SO_HOST, parse_so_results),

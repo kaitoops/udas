@@ -76,18 +76,18 @@ fn classical_mds_2d(distances: &[Vec<f64>]) -> anyhow::Result<Vec<DiskPoint>> {
     let mut row_means = vec![0.0; n];
     let mut col_means = vec![0.0; n];
     let mut grand_mean = 0.0;
-    for i in 0..n {
-        for j in 0..n {
-            row_means[i] += d_sq[i][j];
-            col_means[j] += d_sq[i][j];
-            grand_mean += d_sq[i][j];
+    for (i, row) in d_sq.iter().enumerate() {
+        for (j, &dij) in row.iter().enumerate() {
+            row_means[i] += dij;
+            col_means[j] += dij;
+            grand_mean += dij;
         }
     }
-    for i in 0..n {
-        row_means[i] /= n as f64;
+    for rm in row_means.iter_mut() {
+        *rm /= n as f64;
     }
-    for j in 0..n {
-        col_means[j] /= n as f64;
+    for cm in col_means.iter_mut() {
+        *cm /= n as f64;
     }
     grand_mean /= (n * n) as f64;
 
@@ -108,14 +108,14 @@ fn classical_mds_2d(distances: &[Vec<f64>]) -> anyhow::Result<Vec<DiskPoint>> {
 
     // Take top 2 (pad with zeros if n < 2, though we already checked n >= 2)
     let mut coords = vec![DiskPoint { x: 0.0, y: 0.0 }; n];
-    for dim in 0..2.min(n) {
-        let idx = indices[dim];
+    for (dim, &idx) in indices.iter().enumerate().take(2.min(n)) {
         let lambda = eigenvalues[idx].max(0.0).sqrt(); // clamp negative eigenvalues
-        for i in 0..n {
+        let eig = &eigenvectors[idx];
+        for (i, coord) in coords.iter_mut().enumerate() {
             if dim == 0 {
-                coords[i].x = eigenvectors[idx][i] * lambda;
+                coord.x = eig[i] * lambda;
             } else {
-                coords[i].y = eigenvectors[idx][i] * lambda;
+                coord.y = eig[i] * lambda;
             }
         }
     }
@@ -144,9 +144,9 @@ fn jacobi_eigen(matrix: &[Vec<f64>]) -> anyhow::Result<(Vec<f64>, Vec<Vec<f64>>)
     for _ in 0..max_sweeps {
         // Compute off-diagonal sum
         let mut off_diag: f64 = 0.0;
-        for i in 0..n {
-            for j in (i + 1)..n {
-                off_diag += a[i][j].abs();
+        for (i, row) in a.iter().enumerate() {
+            for &v in row.iter().skip(i + 1) {
+                off_diag += v.abs();
             }
         }
 

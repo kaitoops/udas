@@ -201,7 +201,7 @@ fn handle_state_rollback(slot: usize) -> Result<()> {
     let root = workspace_root()?;
     let mgr = HotFileManager::default_in_dir(&root);
 
-    if slot < 1 || slot > 3 {
+    if !(1..=3).contains(&slot) {
         bail!("slot must be 1, 2, or 3");
     }
 

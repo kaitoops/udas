@@ -6751,9 +6751,9 @@ async fn run_udas_collapse(config: &Config, args: UdasCollapseArgs) -> Result<()
         let month_str = now.format("%m").to_string();
         let month: u32 = month_str.parse().unwrap_or(1);
         let season = match month {
-            3 | 4 | 5 => "spring",
-            6 | 7 | 8 => "summer",
-            9 | 10 | 11 => "autumn",
+            3..=5 => "spring",
+            6..=8 => "summer",
+            9..=11 => "autumn",
             _ => "winter",
         };
         signals.push(EnvironmentalSignal::new(SignalType::Season, season));

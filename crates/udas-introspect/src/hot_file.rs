@@ -57,7 +57,7 @@ impl HotFileManager {
     /// Get the path for a backup slot (1-indexed).
     pub fn backup_path(&self, slot: usize) -> PathBuf {
         assert!(
-            slot >= 1 && slot <= BACKUP_SLOTS,
+            (1..=BACKUP_SLOTS).contains(&slot),
             "slot must be 1..={BACKUP_SLOTS}"
         );
         let mut name = self
@@ -158,7 +158,7 @@ impl HotFileManager {
     /// The backup file itself is not deleted.
     pub fn rollback(&self, slot: usize) -> Result<()> {
         assert!(
-            slot >= 1 && slot <= BACKUP_SLOTS,
+            (1..=BACKUP_SLOTS).contains(&slot),
             "slot must be 1..={BACKUP_SLOTS}"
         );
         let backup = self.backup_path(slot);
