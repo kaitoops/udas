@@ -3757,13 +3757,11 @@ async fn run_subagent(
                                     });
                                 }
                             }
-                            ContentBlockKind::Thinking => {
-                                if !stream_thinking.is_empty() {
-                                    stream_content.push(ContentBlock::Thinking {
-                                        thinking: stream_thinking.clone(),
-                                    });
-                                    stream_thinking.clear();
-                                }
+                            ContentBlockKind::Thinking if !stream_thinking.is_empty() => {
+                                stream_content.push(ContentBlock::Thinking {
+                                    thinking: stream_thinking.clone(),
+                                });
+                                stream_thinking.clear();
                             }
                             _ => {}
                         }
